@@ -1,5 +1,4 @@
 import {
-  adicionarItem,
   arquivarTreino,
   moverItem,
   removerItem,
@@ -7,6 +6,7 @@ import {
   salvarTreino,
 } from "../actions";
 import { Cartao, Vazio } from "@/componentes/Cartao";
+import { AdicionarExercicio } from "./AdicionarExercicio";
 import { nomeExibido, type Exercicio, type Treino } from "@/lib/tipos";
 
 const ENTRADA =
@@ -172,41 +172,11 @@ export function EditorDeTreino({
         </ul>
       )}
 
-      <form
-        action={adicionarItem}
-        className="flex flex-wrap items-end gap-2 border-t border-borda bg-preto/40 px-4 py-3"
-      >
-        <input type="hidden" name="aluno_id" value={alunoId} />
-        <input type="hidden" name="treino_id" value={treino.id} />
-        <label className="min-w-44 flex-1">
-          <span className="mb-1 block text-[10px] uppercase tracking-widest text-fumaca">
-            Adicionar exercício
-          </span>
-          <select name="exercicio_id" required className={ENTRADA}>
-            <option value="">Escolha da biblioteca...</option>
-            {biblioteca.map((ex) => (
-              <option key={ex.id} value={ex.id}>
-                {ex.grupo_muscular} — {ex.nome}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="w-16">
-          <span className="mb-1 block text-[10px] uppercase tracking-widest text-fumaca">
-            Séries
-          </span>
-          <input name="series" defaultValue="4" className={ENTRADA} />
-        </label>
-        <label className="w-20">
-          <span className="mb-1 block text-[10px] uppercase tracking-widest text-fumaca">
-            Reps
-          </span>
-          <input name="repeticoes" defaultValue="12" className={ENTRADA} />
-        </label>
-        <button className="h-9 rounded-lg bg-sangue px-4 text-xs font-semibold uppercase tracking-wider text-white hover:bg-sangue-claro">
-          Adicionar
-        </button>
-      </form>
+      <AdicionarExercicio
+        alunoId={alunoId}
+        treinoId={treino.id}
+        biblioteca={biblioteca}
+      />
     </Cartao>
   );
 }
