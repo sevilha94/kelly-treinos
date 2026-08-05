@@ -148,18 +148,18 @@ export default async function Page() {
  */
 function Abertura() {
   return (
-    <section className="relative -mx-5 -mt-6 h-52 overflow-hidden sm:mx-0 sm:mt-0 sm:h-60 sm:rounded-2xl">
+    <section className="relative -mx-5 -mt-6 h-64 overflow-hidden sm:mx-0 sm:mt-0 sm:h-80 sm:rounded-2xl">
       <Image
         src="/KELLYFOTO.jpg"
         alt=""
         fill
         priority
         sizes="(max-width: 640px) 100vw, 64rem"
-        className="object-cover object-[50%_28%]"
+        className="object-cover object-[50%_12%]"
       />
       <div
         aria-hidden
-        className="absolute inset-0 bg-gradient-to-t from-preto via-preto/70 to-preto/10"
+        className="absolute inset-0 bg-gradient-to-t from-preto via-preto/45 to-transparent"
       />
       <div className="absolute inset-x-0 bottom-0 px-5 pb-5 sm:px-6">
         <span className="block text-[11px] uppercase tracking-[0.28em] text-fumaca">
