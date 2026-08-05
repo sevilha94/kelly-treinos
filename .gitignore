@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# o exemplo entra no repositorio; os arquivos com chave de verdade nao
+!.env.local.example

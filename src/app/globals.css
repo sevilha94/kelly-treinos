@@ -1,26 +1,50 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Paleta tirada da planilha impressa da Kelly: preto, vermelho e branco. */
+@theme {
+  --color-preto: #0b0b0c;
+  --color-carvao: #151517;
+  --color-grafite: #1f1f23;
+  --color-borda: #2c2c31;
+  --color-fumaca: #8b8b93;
+  --color-gelo: #e9e9ec;
+  --color-sangue: #d61f26;
+  --color-sangue-claro: #f0353c;
+  --color-sangue-escuro: #8f1116;
+
+  --font-sans: var(--font-titulo), system-ui, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-preto);
+  color: var(--color-gelo);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Titulos da marca: condensado, itálico, caixa alta — como na planilha */
+.titulo-marca {
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+/* Faixa vermelha diagonal usada nos cabecalhos de card */
+.faixa {
+  background: linear-gradient(
+    100deg,
+    var(--color-sangue) 0%,
+    var(--color-sangue) 70%,
+    var(--color-sangue-escuro) 100%
+  );
+}
+
+input,
+select,
+textarea {
+  color-scheme: dark;
 }
