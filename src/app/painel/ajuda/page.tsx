@@ -166,8 +166,14 @@ export default async function Page() {
           <Lista
             itens={[
               <>
-                No rodapé do bloco, escolha o exercício na lista, ajuste séries e
-                repetições e clique em <B>Adicionar</B>.
+                No rodapé do bloco, escolha primeiro o <B>Grupo</B> — “Pernas”,
+                “Costas”, o que for. A lista de exercícios encolhe só para
+                aquele grupo, em vez de mostrar os {total} de uma vez.
+              </>,
+              <>
+                Escolha o exercício, ajuste séries e repetições e clique em{" "}
+                <B>Adicionar</B>. Deixando o grupo em “Todos”, a lista continua
+                separada por grupo mesmo assim.
               </>,
               <>Para mudar algo depois, clique em cima do exercício e ele se abre.</>,
               <>
@@ -176,6 +182,12 @@ export default async function Page() {
               </>,
             ]}
           />
+          <Nota titulo="Não existe “salvar tudo”">
+            Cada botão salva na hora que você clica — o de <B>Adicionar</B>, o{" "}
+            <B>Salvar</B> de cada treino, o de dentro de cada exercício. Enquanto
+            salva, o botão mostra “Salvando...”. Pode fechar a página quando
+            quiser que nada se perde.
+          </Nota>
           <Rotulo>Nome só nesta planilha</Rotulo>
           <p>
             Ao abrir um exercício existe o campo{" "}
@@ -357,6 +369,11 @@ export default async function Page() {
         </Ficha>
 
         <Ficha id="duvidas" titulo="Perguntas comuns">
+          <Pergunta pergunta="Cadê o botão de salvar tudo no final?">
+            Não existe, e é de propósito. Cada botão salva na hora que você
+            clica, então não há nada esperando para ser gravado. Enquanto salva,
+            o botão mostra “Salvando...”.
+          </Pergunta>
           <Pergunta pergunta="Apaguei sem querer. Perdi?">
             Não. Nada é apagado de verdade no sistema — fica arquivado. Fale com o
             Lucas e dá para recuperar.
