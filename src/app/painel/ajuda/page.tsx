@@ -255,7 +255,9 @@ export default async function Page() {
               </>,
               <>
                 <B>Finalizar treino de hoje</B> no fim — é o que faz contar como
-                treino feito.
+                treino feito. Depois de tocar, o botão vira o aviso{" "}
+                <strong>“Treino concluído”</strong> com a hora, e ele pode
+                desfazer se tocou sem querer.
               </>,
               <>
                 <B>Minhas medidas</B>, se você já tiver feito avaliação física.

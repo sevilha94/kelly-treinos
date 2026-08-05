@@ -1,4 +1,3 @@
-import { cookies, headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const COOKIE_DISPOSITIVO = "kj_dispositivo";
@@ -10,9 +9,15 @@ export const COOKIE_DISPOSITIVO = "kj_dispositivo";
  * proxy gravou no navegador e um rotulo grosseiro do aparelho. Serve apenas
  * para a Kelly desconfiar de um link muito compartilhado — trocar de celular
  * ou limpar o navegador tambem cria um "aparelho novo", entao nunca e prova.
+ *
+ * Roda depois da resposta ir para o aluno (via `after`), porque e registro:
+ * nao pode segurar a pagina para carregar.
  */
-export async function registrarAcesso(alunoId: string) {
-  const dispositivoId = (await cookies()).get(COOKIE_DISPOSITIVO)?.value;
+export async function registrarAcesso(
+  alunoId: string,
+  dispositivoId: string | undefined,
+  userAgent: string | null,
+) {
   if (!dispositivoId) return;
 
   const supabase = createAdminClient();
@@ -37,13 +42,11 @@ export async function registrarAcesso(alunoId: string) {
   await supabase.from("aluno_acesso").insert({
     aluno_id: alunoId,
     dispositivo_id: dispositivoId,
-    aparelho: await rotuloDoAparelho(),
+    aparelho: rotuloDoAparelho(userAgent ?? ""),
   });
 }
 
-async function rotuloDoAparelho() {
-  const ua = (await headers()).get("user-agent") ?? "";
-
+function rotuloDoAparelho(ua: string) {
   const sistema = /iPhone|iPad/i.test(ua)
     ? "iPhone"
     : /Android/i.test(ua)

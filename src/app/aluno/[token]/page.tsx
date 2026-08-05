@@ -1,12 +1,16 @@
 import Link from "next/link";
+import { after } from "next/server";
+import { cookies, headers } from "next/headers";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { registrarAcesso } from "@/lib/acessos";
+import { registrarAcesso, COOKIE_DISPOSITIVO } from "@/lib/acessos";
+import { carregarSessoes } from "@/lib/sessoes";
+import { BotaoFinalizar } from "./BotaoFinalizar";
 import { MidiaExercicio } from "@/componentes/MidiaExercicio";
 import { Marca } from "@/componentes/Marca";
 import { marcarExercicio, finalizarTreino } from "./actions";
-import { historicoDeCargas, formataCarga, type MarcaDeCarga } from "@/lib/cargas";
+import { formataCarga, type MarcaDeCarga } from "@/lib/cargas";
 import {
   deveBloquearPorAtraso,
   nomeDaCompetencia,
@@ -43,8 +47,6 @@ export async function generateMetadata(
     },
   };
 }
-
-type Marcacao = { feito: boolean; carga_kg: number | null };
 
 export default async function Page(props: PageProps<"/aluno/[token]">) {
   const { token } = await props.params;
@@ -89,17 +91,49 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
     );
   }
 
-  const { data: mensalidadeAberta } = await supabase
-    .from("mensalidade")
-    .select("*")
-    .eq("aluno_id", aluno.id)
-    .is("pago_em", null)
-    .is("arquivado_em", null)
-    .order("vencimento")
-    .limit(1)
-    .maybeSingle();
+  // tudo o que depende so do aluno vai junto: cada etapa a mais e uma ida e
+  // volta ate o banco que o aluno espera de pe na academia
+  const [mensalidadeRes, treinosRes, agendaRes, avaliacoesRes] =
+    await Promise.all([
+      supabase
+        .from("mensalidade")
+        .select("*")
+        .eq("aluno_id", aluno.id)
+        .is("pago_em", null)
+        .is("arquivado_em", null)
+        .order("vencimento")
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("treino")
+        .select(
+          `id, letra, titulo, ordem,
+         itens:treino_exercicio(
+           id, apelido, series, repeticoes, observacao, ordem,
+           exercicio:exercicio_id(id, nome, grupo_muscular, midia_url, dica)
+         )`,
+        )
+        .eq("aluno_id", aluno.id)
+        .is("arquivado_em", null)
+        .is("itens.arquivado_em", null)
+        .order("ordem")
+        .order("ordem", { referencedTable: "treino_exercicio" }),
+      supabase
+        .from("aluno_agenda")
+        .select("dia_semana, treino_id")
+        .eq("aluno_id", aluno.id),
+      supabase
+        .from("avaliacao")
+        .select("*")
+        .eq("aluno_id", aluno.id)
+        .is("arquivado_em", null)
+        .order("data", { ascending: false })
+        .limit(2),
+    ]);
 
-  const emAberto = (mensalidadeAberta ?? undefined) as Mensalidade | undefined;
+  const emAberto = (mensalidadeRes.data ?? undefined) as
+    | Mensalidade
+    | undefined;
 
   // so bloqueia se a Kelly ligou isso neste aluno e a tolerancia ja passou
   if (deveBloquearPorAtraso(aluno, emAberto)) {
@@ -116,28 +150,10 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
     );
   }
 
-  await registrarAcesso(aluno.id);
-
-  const [treinosRes, agendaRes] = await Promise.all([
-    supabase
-      .from("treino")
-      .select(
-        `id, letra, titulo, ordem,
-         itens:treino_exercicio(
-           id, apelido, series, repeticoes, observacao, ordem,
-           exercicio:exercicio_id(id, nome, grupo_muscular, midia_url, dica)
-         )`,
-      )
-      .eq("aluno_id", aluno.id)
-      .is("arquivado_em", null)
-      .is("itens.arquivado_em", null)
-      .order("ordem")
-      .order("ordem", { referencedTable: "treino_exercicio" }),
-    supabase
-      .from("aluno_agenda")
-      .select("dia_semana, treino_id")
-      .eq("aluno_id", aluno.id),
-  ]);
+  // registro de aparelho nao pode segurar a pagina: vai depois da resposta
+  const dispositivoId = (await cookies()).get(COOKIE_DISPOSITIVO)?.value;
+  const userAgent = (await headers()).get("user-agent");
+  after(() => registrarAcesso(aluno.id, dispositivoId, userAgent));
 
   const treinos = (treinosRes.data ?? []) as unknown as Treino[];
 
@@ -162,18 +178,13 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
     treinos.find((item) => item.id === treinoDeHoje) ??
     treinos[0];
 
-  const [marcacoes, historico, avaliacoesRes] = await Promise.all([
-    marcacoesDeHoje(aluno.id, treino.id),
-    // sem o dia de hoje: "ultima vez" tem que ser o treino anterior
-    historicoDeCargas(supabase, aluno.id, dataDeHoje()),
-    supabase
-      .from("avaliacao")
-      .select("*")
-      .eq("aluno_id", aluno.id)
-      .is("arquivado_em", null)
-      .order("data", { ascending: false })
-      .limit(2),
-  ]);
+  const { finalizadaEm, marcacoes, historico } = await carregarSessoes(
+    supabase,
+    aluno.id,
+    treino.id,
+    dataDeHoje(),
+  );
+
   const avaliacoes = (avaliacoesRes.data ?? []) as Avaliacao[];
   const feitos = treino.itens.filter((item) => marcacoes.get(item.id)?.feito);
 
@@ -307,13 +318,33 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
 
       <MinhasMedidas avaliacoes={avaliacoes} />
 
-      <form action={finalizarTreino} className="px-5 py-6">
-        <input type="hidden" name="token" value={token} />
-        <input type="hidden" name="treino_id" value={treino.id} />
-        <button className="h-12 w-full rounded-xl bg-sangue text-sm font-bold uppercase tracking-widest text-white">
-          Finalizar treino de hoje
-        </button>
-      </form>
+      <div className="px-5 py-6">
+        {finalizadaEm ? (
+          <div className="space-y-3 rounded-xl border border-sangue bg-sangue-escuro/15 px-4 py-5 text-center">
+            <p className="titulo-marca text-2xl text-sangue-claro">
+              Treino concluído
+            </p>
+            <p className="text-sm text-fumaca">
+              Você finalizou às {horaDe(finalizadaEm)}. A Kelly já está vendo
+              aqui.
+            </p>
+            <form action={finalizarTreino}>
+              <input type="hidden" name="token" value={token} />
+              <input type="hidden" name="treino_id" value={treino.id} />
+              <input type="hidden" name="desfazer" value="sim" />
+              <button className="text-xs uppercase tracking-wider text-fumaca underline">
+                Desfazer
+              </button>
+            </form>
+          </div>
+        ) : (
+          <form action={finalizarTreino}>
+            <input type="hidden" name="token" value={token} />
+            <input type="hidden" name="treino_id" value={treino.id} />
+            <BotaoFinalizar />
+          </form>
+        )}
+      </div>
 
       <p className="px-5 pb-10 text-center text-xs uppercase tracking-[0.2em] text-fumaca">
         Você é o responsável pela sua mudança
@@ -488,31 +519,10 @@ function dataDeHoje() {
   return new Date().toISOString().slice(0, 10);
 }
 
-async function marcacoesDeHoje(alunoId: string, treinoId: string) {
-  const supabase = createAdminClient();
-  const hoje = dataDeHoje();
 
-  const { data: sessao } = await supabase
-    .from("sessao")
-    .select("id")
-    .eq("aluno_id", alunoId)
-    .eq("treino_id", treinoId)
-    .eq("data", hoje)
-    .maybeSingle();
-
-  const marcacoes = new Map<string, Marcacao>();
-  if (!sessao) return marcacoes;
-
-  const { data: itens } = await supabase
-    .from("sessao_item")
-    .select("treino_exercicio_id, feito, carga_kg")
-    .eq("sessao_id", sessao.id);
-
-  for (const item of itens ?? []) {
-    marcacoes.set(item.treino_exercicio_id, {
-      feito: item.feito,
-      carga_kg: item.carga_kg,
-    });
-  }
-  return marcacoes;
+function horaDe(iso: string) {
+  return new Date(iso).toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }

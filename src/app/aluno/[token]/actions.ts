@@ -103,9 +103,11 @@ export async function finalizarTreino(formData: FormData) {
   const sessaoId = await sessaoDeHoje(contexto, treinoId);
   if (!sessaoId) return;
 
+  const desfazer = formData.get("desfazer") === "sim";
+
   await contexto.supabase
     .from("sessao")
-    .update({ finalizada_em: new Date().toISOString() })
+    .update({ finalizada_em: desfazer ? null : new Date().toISOString() })
     .eq("id", sessaoId);
 
   revalidatePath(`/aluno/${token}`);
