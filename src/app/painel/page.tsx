@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { Cartao, Vazio } from "@/componentes/Cartao";
 import {
@@ -55,7 +56,7 @@ export default async function Page() {
 
   return (
     <div className="space-y-6">
-      <h1 className="titulo-marca text-3xl">Painel</h1>
+      <Abertura />
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Atalho
@@ -135,6 +136,38 @@ export default async function Page() {
         treina sem marcar aparece como sumido — vale combinar isso com ele.
       </p>
     </div>
+  );
+}
+
+/**
+ * Faixa de abertura do painel.
+ *
+ * A foto e quadrada e o recorte aqui e largo e baixo, entao o object-position
+ * puxa para cima: e onde esta o rosto dela. O degrade termina na cor exata da
+ * pagina, para a foto morrer no fundo em vez de virar um retangulo colado.
+ */
+function Abertura() {
+  return (
+    <section className="relative -mx-5 -mt-6 h-52 overflow-hidden sm:mx-0 sm:mt-0 sm:h-60 sm:rounded-2xl">
+      <Image
+        src="/KELLYFOTO.jpg"
+        alt=""
+        fill
+        priority
+        sizes="(max-width: 640px) 100vw, 64rem"
+        className="object-cover object-[50%_28%]"
+      />
+      <div
+        aria-hidden
+        className="absolute inset-0 bg-gradient-to-t from-preto via-preto/70 to-preto/10"
+      />
+      <div className="absolute inset-x-0 bottom-0 px-5 pb-5 sm:px-6">
+        <span className="block text-[11px] uppercase tracking-[0.28em] text-fumaca">
+          Kelly Jhuly · Personal trainer
+        </span>
+        <h1 className="titulo-marca text-4xl leading-none">Painel</h1>
+      </div>
+    </section>
   );
 }
 
