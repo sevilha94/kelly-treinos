@@ -16,6 +16,7 @@ import {
 } from "../actions";
 import { Avaliacoes } from "./Avaliacoes";
 import { Cobranca } from "./Cobranca";
+import { BotaoSalvar } from "@/componentes/BotaoSalvar";
 import type { Mensalidade } from "@/lib/mensalidades";
 import {
   DIAS_SEMANA,
@@ -117,6 +118,10 @@ export default async function Page(props: PageProps<"/painel/alunos/[id]">) {
         ‹ Voltar para os alunos
       </Link>
       <h1 className="titulo-marca text-3xl">{aluno.nome}</h1>
+      <p className="text-sm text-fumaca">
+        Cada botão salva na hora — não existe um “salvar tudo” no final. Pode
+        fechar a página quando quiser que nada se perde.
+      </p>
 
       <Cartao titulo="Link do aluno">
         <LinkDoAluno
@@ -151,9 +156,7 @@ export default async function Page(props: PageProps<"/painel/alunos/[id]">) {
               </label>
             ))}
           </div>
-          <button className="h-10 rounded-lg border border-borda px-4 text-xs uppercase tracking-wider text-gelo hover:border-fumaca">
-            Salvar semana
-          </button>
+          <BotaoSalvar variante="secundario">Salvar semana</BotaoSalvar>
         </form>
       </Cartao>
 

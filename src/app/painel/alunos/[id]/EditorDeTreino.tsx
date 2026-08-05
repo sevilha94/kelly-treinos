@@ -7,6 +7,7 @@ import {
 } from "../actions";
 import { Cartao, Vazio } from "@/componentes/Cartao";
 import { AdicionarExercicio } from "./AdicionarExercicio";
+import { BotaoSalvar } from "@/componentes/BotaoSalvar";
 import { nomeExibido, type Exercicio, type Treino } from "@/lib/tipos";
 
 const ENTRADA =
@@ -46,9 +47,7 @@ export function EditorDeTreino({
             className={ENTRADA}
           />
         </label>
-        <button className="h-9 rounded-lg border border-borda px-3 text-xs uppercase tracking-wider text-fumaca hover:border-fumaca hover:text-gelo">
-          Salvar
-        </button>
+        <BotaoSalvar variante="secundario" />
         <button
           formAction={arquivarTreino}
           className="h-9 rounded-lg px-3 text-xs uppercase tracking-wider text-fumaca hover:text-sangue-claro"
@@ -135,9 +134,7 @@ export function EditorDeTreino({
                   </label>
 
                   <div className="flex flex-wrap items-center gap-2">
-                    <button className="h-9 rounded-lg bg-sangue px-4 text-xs font-semibold uppercase tracking-wider text-white hover:bg-sangue-claro">
-                      Salvar
-                    </button>
+                    <BotaoSalvar />
                     {indice > 0 && (
                       <button
                         formAction={moverItem}
