@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { EXERCICIOS_COMUNS } from "@/lib/exerciciosComuns";
+import { idDoGrupo } from "@/lib/tipos";
 
 export type EstadoExercicio = { erro?: string };
 
@@ -44,8 +45,12 @@ export async function salvarExercicio(
   if (error) return { erro: "Não consegui salvar. Tente de novo." };
 
   revalidatePath("/painel/exercicios");
-  if (id) redirect("/painel/exercicios");
-  return {};
+
+  // volta para a lista já rolada no grupo certo e com ele aberto, para ela ver
+  // onde o exercício foi parar em vez de ter que procurar
+  redirect(
+    `/painel/exercicios?g=${encodeURIComponent(grupo)}#${idDoGrupo(grupo)}`,
+  );
 }
 
 /**

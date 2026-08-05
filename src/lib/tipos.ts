@@ -106,6 +106,19 @@ export const MEDIDAS = [
   unidade: string;
 }[];
 
+/** Identificador do grupo na URL, para conseguir rolar ate ele e abri-lo. */
+export function idDoGrupo(grupo: string): string {
+  return (
+    "grupo-" +
+    grupo
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+  );
+}
+
 /** IMC nao fica no banco: sai de peso e altura, para nunca divergir deles. */
 export function calculaImc(
   pesoKg: number | null,

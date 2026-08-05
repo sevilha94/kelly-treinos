@@ -3,11 +3,13 @@ import { createClient } from "@/lib/supabase/server";
 import { Cartao, Vazio } from "@/componentes/Cartao";
 import { lerMidia } from "@/lib/midia";
 import { preencherBiblioteca } from "./actions";
-import type { Exercicio } from "@/lib/tipos";
+import { idDoGrupo, type Exercicio } from "@/lib/tipos";
 
 export default async function Page(props: PageProps<"/painel/exercicios">) {
-  const { sem } = await props.searchParams;
+  const { sem, g } = await props.searchParams;
   const soSemMidia = sem === "1";
+  // grupo que acabou de receber um exercicio: chega aberto e com a pagina rolada
+  const grupoDestacado = typeof g === "string" ? g : undefined;
 
   const supabase = await createClient();
   const { data } = await supabase
@@ -97,7 +99,28 @@ export default async function Page(props: PageProps<"/painel/exercicios">) {
             </Cartao>
           ) : (
             porGrupo.map(([grupo, lista]) => (
-              <Cartao key={grupo} titulo={grupo}>
+              <details
+                key={grupo}
+                id={idDoGrupo(grupo)}
+                // filtrando, ela esta trabalhando na lista: melhor tudo aberto
+                open={soSemMidia || grupo === grupoDestacado}
+                className="group scroll-mt-4 overflow-hidden rounded-2xl border border-borda bg-carvao"
+              >
+                <summary className="faixa flex cursor-pointer list-none items-center gap-3 px-4 py-2.5">
+                  <span
+                    aria-hidden
+                    className="text-white transition-transform group-open:rotate-90"
+                  >
+                    ▸
+                  </span>
+                  <h2 className="titulo-marca flex-1 text-lg text-white">
+                    {grupo}
+                  </h2>
+                  <span className="text-xs tabular-nums text-white/75">
+                    {lista.length}
+                  </span>
+                </summary>
+
                 <ul className="divide-y divide-borda">
                   {lista.map((ex) => (
                     <li key={ex.id}>
@@ -120,7 +143,7 @@ export default async function Page(props: PageProps<"/painel/exercicios">) {
                     </li>
                   ))}
                 </ul>
-              </Cartao>
+              </details>
             ))
           )}
         </>
