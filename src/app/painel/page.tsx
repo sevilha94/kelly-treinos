@@ -7,11 +7,16 @@ import {
   TOM_CLASSE,
   type Frequencia,
 } from "@/lib/frequencia";
+import {
+  emAbertoPorAluno,
+  nomeDaCompetencia,
+  situacaoMensalidade,
+} from "@/lib/mensalidades";
 
 export default async function Page() {
   const supabase = await createClient();
 
-  const [alunosRes, exerciciosRes, frequencias] = await Promise.all([
+  const [alunosRes, exerciciosRes, frequencias, emAberto] = await Promise.all([
     supabase
       .from("aluno")
       .select("id, nome")
@@ -22,6 +27,7 @@ export default async function Page() {
       .select("id", { count: "exact", head: true })
       .is("arquivado_em", null),
     frequenciaPorAluno(supabase),
+    emAbertoPorAluno(supabase),
   ]);
 
   const alunos = alunosRes.data ?? [];
@@ -40,6 +46,12 @@ export default async function Page() {
     return dias === undefined || dias === null || dias > 7;
   });
   const emDia = porAusencia.filter((aluno) => !sumidos.includes(aluno));
+
+  // mensalidade vencida, da mais atrasada para a menos
+  const devendo = alunos
+    .map((aluno) => ({ aluno, situacao: situacaoMensalidade(emAberto.get(aluno.id)) }))
+    .filter((linha) => (linha.situacao?.diasDeAtraso ?? 0) > 0)
+    .sort((a, b) => b.situacao!.diasDeAtraso - a.situacao!.diasDeAtraso);
 
   return (
     <div className="space-y-6">
@@ -89,6 +101,34 @@ export default async function Page() {
           </>
         )}
       </Cartao>
+
+      {devendo.length > 0 && (
+        <Cartao titulo="Mensalidade em atraso">
+          <ul className="divide-y divide-borda">
+            {devendo.map(({ aluno, situacao: sit }) => (
+              <li key={aluno.id}>
+                <Link
+                  href={`/painel/alunos/${aluno.id}`}
+                  className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-grafite"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-base">{aluno.nome}</span>
+                    <span className="text-xs text-fumaca">
+                      {nomeDaCompetencia(emAberto.get(aluno.id)!.competencia)} · R${" "}
+                      {Number(emAberto.get(aluno.id)!.valor)
+                        .toFixed(2)
+                        .replace(".", ",")}
+                    </span>
+                  </span>
+                  <span className={`shrink-0 text-sm ${TOM_CLASSE[sit!.tom]}`}>
+                    {sit!.texto}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Cartao>
+      )}
 
       <p className="text-sm leading-relaxed text-fumaca">
         Só entram nesta conta os treinos que o aluno finalizou pelo link. Quem

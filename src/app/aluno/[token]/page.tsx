@@ -8,6 +8,12 @@ import { Marca } from "@/componentes/Marca";
 import { marcarExercicio, finalizarTreino } from "./actions";
 import { historicoDeCargas, formataCarga, type MarcaDeCarga } from "@/lib/cargas";
 import {
+  deveBloquearPorAtraso,
+  nomeDaCompetencia,
+  situacaoMensalidade,
+  type Mensalidade,
+} from "@/lib/mensalidades";
+import {
   DIAS_SEMANA,
   MEDIDAS,
   calculaImc,
@@ -18,11 +24,25 @@ import {
   type Treino,
 } from "@/lib/tipos";
 
-export const metadata: Metadata = {
-  title: "Meu treino — Kelly Jhuly",
-  // a planilha é pessoal: nao queremos ela indexada em buscador nenhum
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(
+  props: PageProps<"/aluno/[token]">,
+): Promise<Metadata> {
+  const { token } = await props.params;
+
+  return {
+    title: "Meu treino — Kelly Jhuly",
+    // a planilha é pessoal: nao queremos ela indexada em buscador nenhum
+    robots: { index: false, follow: false },
+    // manifesto proprio de cada aluno, para o atalho na tela inicial abrir a
+    // planilha dele e nao a tela de login
+    manifest: `/aluno/${token}/manifest.webmanifest`,
+    appleWebApp: {
+      capable: true,
+      title: "Meu treino",
+      statusBarStyle: "black-translucent",
+    },
+  };
+}
 
 type Marcacao = { feito: boolean; carga_kg: number | null };
 
@@ -32,9 +52,12 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
 
   const supabase = createAdminClient();
 
+  // "*" de proposito: assim a pagina nao quebra se uma coluna nova ainda nao
+  // existir no banco — o deploy do codigo e a migracao nao precisam ser no
+  // mesmo minuto
   const { data: alunoData } = await supabase
     .from("aluno")
-    .select("id, nome, token_link, objetivo, acesso_bloqueado_em")
+    .select("*")
     .eq("token_link", token)
     .is("arquivado_em", null)
     .maybeSingle();
@@ -42,7 +65,13 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
   if (!alunoData) notFound();
   const aluno = alunoData as Pick<
     Aluno,
-    "id" | "nome" | "objetivo" | "token_link" | "acesso_bloqueado_em"
+    | "id"
+    | "nome"
+    | "objetivo"
+    | "token_link"
+    | "acesso_bloqueado_em"
+    | "bloquear_por_atraso"
+    | "dias_tolerancia"
   >;
 
   // acesso pausado pela Kelly: nada da planilha e carregado
@@ -54,6 +83,33 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
           <p className="text-sm leading-relaxed text-fumaca">
             Seu treino está temporariamente indisponível. Fale com a Kelly para
             liberar de novo.
+          </p>
+        </div>
+      </Moldura>
+    );
+  }
+
+  const { data: mensalidadeAberta } = await supabase
+    .from("mensalidade")
+    .select("*")
+    .eq("aluno_id", aluno.id)
+    .is("pago_em", null)
+    .is("arquivado_em", null)
+    .order("vencimento")
+    .limit(1)
+    .maybeSingle();
+
+  const emAberto = (mensalidadeAberta ?? undefined) as Mensalidade | undefined;
+
+  // so bloqueia se a Kelly ligou isso neste aluno e a tolerancia ja passou
+  if (deveBloquearPorAtraso(aluno, emAberto)) {
+    return (
+      <Moldura nome={aluno.nome}>
+        <div className="space-y-3 px-5 py-16 text-center">
+          <p className="titulo-marca text-2xl">Mensalidade em aberto</p>
+          <p className="text-sm leading-relaxed text-fumaca">
+            A mensalidade de {nomeDaCompetencia(emAberto!.competencia)} está
+            pendente. Assim que acertar com a Kelly, seu treino volta na hora.
           </p>
         </div>
       </Moldura>
@@ -247,6 +303,8 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
         })}
       </ul>
 
+      <AvisoDeMensalidade emAberto={emAberto} />
+
       <MinhasMedidas avaliacoes={avaliacoes} />
 
       <form action={finalizarTreino} className="px-5 py-6">
@@ -261,6 +319,22 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
         Você é o responsável pela sua mudança
       </p>
     </Moldura>
+  );
+}
+
+/**
+ * Aviso discreto de mensalidade. So aparece a partir do vencimento — antes
+ * disso e cobranca antecipada, e nao e esse o papel da tela de treino.
+ */
+function AvisoDeMensalidade({ emAberto }: { emAberto?: Mensalidade }) {
+  const sit = situacaoMensalidade(emAberto);
+  if (!sit || sit.diasDeAtraso === 0) return null;
+
+  return (
+    <p className="mx-5 mt-4 rounded-lg border border-sangue-escuro bg-sangue-escuro/10 px-3 py-2.5 text-sm leading-relaxed">
+      Mensalidade de {nomeDaCompetencia(emAberto!.competencia)} em aberto — fale
+      com a Kelly quando puder.
+    </p>
   );
 }
 

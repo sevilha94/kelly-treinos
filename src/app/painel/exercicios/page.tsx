@@ -2,9 +2,13 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Cartao, Vazio } from "@/componentes/Cartao";
 import { lerMidia } from "@/lib/midia";
+import { preencherBiblioteca } from "./actions";
 import type { Exercicio } from "@/lib/tipos";
 
-export default async function Page() {
+export default async function Page(props: PageProps<"/painel/exercicios">) {
+  const { sem } = await props.searchParams;
+  const soSemMidia = sem === "1";
+
   const supabase = await createClient();
   const { data } = await supabase
     .from("exercicio")
@@ -13,7 +17,9 @@ export default async function Page() {
     .order("grupo_muscular")
     .order("nome");
 
-  const exercicios = (data ?? []) as Exercicio[];
+  const todos = (data ?? []) as Exercicio[];
+  const semMidia = todos.filter((ex) => !ex.midia_url?.trim());
+  const exercicios = soSemMidia ? semMidia : todos;
   const porGrupo = agruparPorGrupo(exercicios);
 
   return (
@@ -28,38 +34,74 @@ export default async function Page() {
         </Link>
       </div>
 
-      {exercicios.length === 0 ? (
-        <Cartao titulo="Nenhum exercício ainda">
-          <Vazio>
-            Cadastre cada exercício uma única vez. Depois é só escolher da lista
-            ao montar a planilha de qualquer aluno.
-          </Vazio>
+      {todos.length === 0 ? (
+        <Cartao titulo="Comece por aqui">
+          <div className="space-y-4 px-4 py-5">
+            <p className="text-sm leading-relaxed text-fumaca">
+              Posso cadastrar de uma vez os exercícios mais comuns de academia,
+              com nome e grupo muscular já preenchidos. Depois você entra em
+              cada um e cola o link do vídeo, no seu ritmo.
+            </p>
+            <form action={preencherBiblioteca}>
+              <button className="h-11 rounded-lg bg-sangue px-5 text-sm font-semibold uppercase tracking-wider text-white hover:bg-sangue-claro">
+                Preencher com exercícios comuns
+              </button>
+            </form>
+            <p className="text-xs text-fumaca">
+              Não apaga nem altera nada do que você já cadastrou.
+            </p>
+          </div>
         </Cartao>
       ) : (
-        porGrupo.map(([grupo, lista]) => (
-          <Cartao key={grupo} titulo={grupo}>
-            <ul className="divide-y divide-borda">
-              {lista.map((ex) => (
-                <li key={ex.id}>
-                  <Link
-                    href={`/painel/exercicios/${ex.id}`}
-                    className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-grafite"
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate text-base">{ex.nome}</span>
-                      <span className="text-xs text-fumaca">
-                        {rotuloDaMidia(ex.midia_url)}
-                      </span>
-                    </span>
-                    <span aria-hidden className="text-fumaca">
-                      ›
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </Cartao>
-        ))
+        <>
+          {semMidia.length > 0 && (
+            <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-borda bg-carvao px-4 py-3">
+              <span className="text-sm text-fumaca">
+                {semMidia.length} de {todos.length}{" "}
+                {semMidia.length === 1 ? "está" : "estão"} sem demonstração
+              </span>
+              <Link
+                href={soSemMidia ? "/painel/exercicios" : "/painel/exercicios?sem=1"}
+                className="ml-auto text-xs uppercase tracking-wider text-sangue-claro hover:underline"
+              >
+                {soSemMidia ? "Ver todos" : "Ver só esses"}
+              </Link>
+            </div>
+          )}
+
+          {exercicios.length === 0 ? (
+            <Cartao>
+              <Vazio>Todos os exercícios já têm demonstração.</Vazio>
+            </Cartao>
+          ) : (
+            porGrupo.map(([grupo, lista]) => (
+              <Cartao key={grupo} titulo={grupo}>
+                <ul className="divide-y divide-borda">
+                  {lista.map((ex) => (
+                    <li key={ex.id}>
+                      <Link
+                        href={`/painel/exercicios/${ex.id}`}
+                        className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-grafite"
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-base">
+                            {ex.nome}
+                          </span>
+                          <span className="text-xs text-fumaca">
+                            {rotuloDaMidia(ex.midia_url)}
+                          </span>
+                        </span>
+                        <span aria-hidden className="text-fumaca">
+                          ›
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </Cartao>
+            ))
+          )}
+        </>
       )}
     </div>
   );

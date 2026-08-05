@@ -15,6 +15,8 @@ import {
   salvarAgenda,
 } from "../actions";
 import { Avaliacoes } from "./Avaliacoes";
+import { Cobranca } from "./Cobranca";
+import type { Mensalidade } from "@/lib/mensalidades";
 import {
   DIAS_SEMANA,
   type Aluno,
@@ -35,6 +37,7 @@ export default async function Page(props: PageProps<"/painel/alunos/[id]">) {
     acessosRes,
     outrosRes,
     avaliacoesRes,
+    mensalidadesRes,
   ] = await Promise.all([
     supabase
       .from("aluno")
@@ -83,6 +86,13 @@ export default async function Page(props: PageProps<"/painel/alunos/[id]">) {
       .eq("aluno_id", id)
       .is("arquivado_em", null)
       .order("data", { ascending: false }),
+    supabase
+      .from("mensalidade")
+      .select("*")
+      .eq("aluno_id", id)
+      .is("arquivado_em", null)
+      .order("competencia", { ascending: false })
+      .limit(6),
   ]);
 
   if (!alunoRes.data) notFound();
@@ -93,6 +103,7 @@ export default async function Page(props: PageProps<"/painel/alunos/[id]">) {
   const acessos = (acessosRes.data ?? []) as Acesso[];
   const outros = (outrosRes.data ?? []) as { id: string; nome: string }[];
   const avaliacoes = (avaliacoesRes.data ?? []) as Avaliacao[];
+  const mensalidades = (mensalidadesRes.data ?? []) as Mensalidade[];
   const agenda = new Map(
     (agendaRes.data ?? []).map((linha) => [linha.dia_semana, linha.treino_id]),
   );
@@ -155,6 +166,8 @@ export default async function Page(props: PageProps<"/painel/alunos/[id]">) {
           para conseguir montar os treinos.
         </p>
       )}
+
+      <Cobranca aluno={aluno} mensalidades={mensalidades} />
 
       <Avaliacoes
         alunoId={aluno.id}

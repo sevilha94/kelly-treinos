@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { MEDIDAS } from "@/lib/tipos";
 import { copiarTreinos } from "@/lib/copiaPlanilha";
+import { competenciaAtual } from "@/lib/mensalidades";
 
 export type EstadoAluno = { erro?: string };
 
@@ -335,6 +336,80 @@ export async function arquivarAvaliacao(formData: FormData) {
     .eq("id", String(formData.get("avaliacao_id") ?? ""));
 
   revalidatePath(`/painel/alunos/${alunoId}`);
+}
+
+// ---------------------------------------------------------------------------
+// MENSALIDADE
+//
+// O sistema nao movimenta dinheiro: ela cobra por Pix como sempre e aqui so
+// registra o que combinou e o que entrou.
+// ---------------------------------------------------------------------------
+
+export async function salvarCobranca(formData: FormData) {
+  const supabase = await exigirLogin();
+  const alunoId = String(formData.get("aluno_id") ?? "");
+
+  const dia = numero(formData, "dia_vencimento");
+
+  await supabase
+    .from("aluno")
+    .update({
+      valor_mensalidade: numero(formData, "valor_mensalidade"),
+      dia_vencimento: dia ? Math.min(28, Math.max(1, Math.round(dia))) : null,
+      bloquear_por_atraso: formData.get("bloquear_por_atraso") === "sim",
+      dias_tolerancia: Math.max(0, Math.round(numero(formData, "dias_tolerancia") ?? 5)),
+      atualizado_em: new Date().toISOString(),
+    })
+    .eq("id", alunoId);
+
+  revalidatePath(`/painel/alunos/${alunoId}`);
+}
+
+export async function gerarMensalidade(formData: FormData) {
+  const supabase = await exigirLogin();
+  const alunoId = String(formData.get("aluno_id") ?? "");
+
+  const { data: aluno } = await supabase
+    .from("aluno")
+    .select("valor_mensalidade, dia_vencimento")
+    .eq("id", alunoId)
+    .single();
+
+  if (!aluno?.valor_mensalidade) return;
+
+  const competencia = texto(formData, "competencia") ?? competenciaAtual();
+  const [ano, mes] = competencia.split("-");
+  const dia = String(aluno.dia_vencimento ?? 10).padStart(2, "0");
+
+  await supabase.from("mensalidade").upsert(
+    {
+      aluno_id: alunoId,
+      competencia,
+      valor: aluno.valor_mensalidade,
+      vencimento: `${ano}-${mes}-${dia}`,
+    },
+    { onConflict: "aluno_id,competencia" },
+  );
+
+  revalidatePath(`/painel/alunos/${alunoId}`);
+  revalidatePath("/painel");
+}
+
+export async function alternarPagamento(formData: FormData) {
+  const supabase = await exigirLogin();
+  const alunoId = String(formData.get("aluno_id") ?? "");
+  const pagar = formData.get("pagar") === "sim";
+
+  await supabase
+    .from("mensalidade")
+    .update({
+      pago_em: pagar ? new Date().toISOString() : null,
+      forma: pagar ? (texto(formData, "forma") ?? "Pix") : null,
+    })
+    .eq("id", String(formData.get("mensalidade_id") ?? ""));
+
+  revalidatePath(`/painel/alunos/${alunoId}`);
+  revalidatePath("/painel");
 }
 
 // ---------------------------------------------------------------------------

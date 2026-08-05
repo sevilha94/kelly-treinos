@@ -18,19 +18,32 @@ export function FormularioExercicio({
   );
   // preview ao vivo: ela cola o link e ja confere se abriu a demonstracao certa
   const [midiaUrl, setMidiaUrl] = useState(exercicio?.midia_url ?? "");
+  const [nome, setNome] = useState(exercicio?.nome ?? "");
+
+  const buscaNoYoutube = `https://www.youtube.com/results?search_query=${encodeURIComponent(
+    `${nome} execução correta`,
+  )}`;
 
   return (
     <form action={acao} className="space-y-4">
       {exercicio && <input type="hidden" name="id" value={exercicio.id} />}
 
-      <Campo
-        label="Nome do exercício"
-        nome="nome"
-        valor={exercicio?.nome}
-        placeholder="Supino barra"
-        obrigatorio
-        ajuda="Pode mudar depois quando quiser — é só voltar aqui e editar."
-      />
+      <label className="block">
+        <span className="mb-1.5 block text-xs uppercase tracking-widest text-fumaca">
+          Nome do exercício
+        </span>
+        <input
+          name="nome"
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+          placeholder="Supino barra"
+          required
+          className="w-full rounded-lg border border-borda bg-grafite px-3 py-2.5 text-base text-gelo placeholder:text-fumaca/60 focus:border-sangue focus:outline-none"
+        />
+        <span className="mt-1 block text-xs text-fumaca">
+          Pode mudar depois quando quiser — é só voltar aqui e editar.
+        </span>
+      </label>
 
       <Campo
         label="Grupo muscular"
@@ -56,6 +69,17 @@ export function FormularioExercicio({
           trocar por vídeo depois.
         </span>
       </label>
+
+      {nome.trim() && (
+        <a
+          href={buscaNoYoutube}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex h-10 items-center rounded-lg border border-borda px-4 text-xs font-semibold uppercase tracking-wider text-gelo hover:border-fumaca"
+        >
+          Procurar “{nome.trim()}” no YouTube
+        </a>
+      )}
 
       <div>
         <span className="mb-1.5 block text-xs uppercase tracking-widest text-fumaca">

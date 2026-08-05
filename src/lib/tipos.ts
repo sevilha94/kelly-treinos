@@ -19,6 +19,10 @@ export type Aluno = {
   observacoes: string | null;
   /** Preenchido enquanto o aluno estiver com o acesso pausado pela Kelly. */
   acesso_bloqueado_em: string | null;
+  valor_mensalidade: number | null;
+  dia_vencimento: number | null;
+  bloquear_por_atraso: boolean;
+  dias_tolerancia: number;
 };
 
 export type ItemDoTreino = {
