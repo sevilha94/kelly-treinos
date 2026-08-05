@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Cartao, Vazio } from "@/componentes/Cartao";
-import { frequenciaPorAluno, situacao, TOM_CLASSE } from "@/lib/frequencia";
+import {
+  frequenciaPorAluno,
+  situacao,
+  TOM_CLASSE,
+  type Frequencia,
+} from "@/lib/frequencia";
 
 export default async function Page() {
   const supabase = await createClient();
@@ -28,10 +33,13 @@ export default async function Page() {
     return diasB - diasA;
   });
 
+  // quem passou de 7 dias fica sempre a vista; o resto so quando ela pedir,
+  // porque aluno em dia e justamente o que ela nao precisa olhar
   const sumidos = porAusencia.filter((aluno) => {
     const dias = frequencias.get(aluno.id)?.diasSemTreinar;
     return dias === undefined || dias === null || dias > 7;
   });
+  const emDia = porAusencia.filter((aluno) => !sumidos.includes(aluno));
 
   return (
     <div className="space-y-6">
@@ -56,39 +64,29 @@ export default async function Page() {
         />
       </div>
 
-      <Cartao titulo="Quem treinou e quem sumiu">
+      <Cartao titulo="Quem sumiu">
         {alunos.length === 0 ? (
           <Vazio>Nenhum aluno cadastrado ainda.</Vazio>
         ) : (
-          <ul className="divide-y divide-borda">
-            {porAusencia.map((aluno) => {
-              const freq = frequencias.get(aluno.id);
-              const { texto, tom } = situacao(freq);
+          <>
+            {sumidos.length === 0 ? (
+              <Vazio>
+                Ninguém sumido. Todo mundo treinou nos últimos 7 dias.
+              </Vazio>
+            ) : (
+              <Lista alunos={sumidos} frequencias={frequencias} />
+            )}
 
-              return (
-                <li key={aluno.id}>
-                  <Link
-                    href={`/painel/alunos/${aluno.id}`}
-                    className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-grafite"
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate text-base">
-                        {aluno.nome}
-                      </span>
-                      <span className="text-xs text-fumaca">
-                        {freq?.treinosNoMes ?? 0} treinos nos últimos 30 dias
-                      </span>
-                    </span>
-                    <span
-                      className={`shrink-0 text-sm ${TOM_CLASSE[tom]}`}
-                    >
-                      {texto}
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+            {emDia.length > 0 && (
+              <details className="border-t border-borda">
+                <summary className="cursor-pointer px-4 py-3 text-xs uppercase tracking-wider text-fumaca hover:text-gelo">
+                  Ver os outros {emDia.length}{" "}
+                  {emDia.length === 1 ? "aluno" : "alunos"}
+                </summary>
+                <Lista alunos={emDia} frequencias={frequencias} />
+              </details>
+            )}
+          </>
         )}
       </Cartao>
 
@@ -97,6 +95,42 @@ export default async function Page() {
         treina sem marcar aparece como sumido — vale combinar isso com ele.
       </p>
     </div>
+  );
+}
+
+function Lista({
+  alunos,
+  frequencias,
+}: {
+  alunos: { id: string; nome: string }[];
+  frequencias: Map<string, Frequencia>;
+}) {
+  return (
+    <ul className="divide-y divide-borda">
+      {alunos.map((aluno) => {
+        const freq = frequencias.get(aluno.id);
+        const { texto, tom } = situacao(freq);
+
+        return (
+          <li key={aluno.id}>
+            <Link
+              href={`/painel/alunos/${aluno.id}`}
+              className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-grafite"
+            >
+              <span className="min-w-0">
+                <span className="block truncate text-base">{aluno.nome}</span>
+                <span className="text-xs text-fumaca">
+                  {freq?.treinosNoMes ?? 0} treinos nos últimos 30 dias
+                </span>
+              </span>
+              <span className={`shrink-0 text-sm ${TOM_CLASSE[tom]}`}>
+                {texto}
+              </span>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
