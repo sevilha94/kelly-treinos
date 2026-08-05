@@ -1,12 +1,24 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Ajuda — Kelly Jhuly",
 };
 
-export default function Page() {
+export default async function Page() {
+  // os numeros saem do banco: escritos na mao, envelheceriam no primeiro
+  // exercicio que ela cadastrasse
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("exercicio")
+    .select("midia_url")
+    .is("arquivado_em", null);
+
+  const total = data?.length ?? 0;
+  const semMidia = (data ?? []).filter((ex) => !ex.midia_url?.trim()).length;
+
   return (
     <div className="mx-auto max-w-2xl space-y-10 pb-10">
       <header>
@@ -44,21 +56,47 @@ export default function Page() {
           </Nota>
         </Passo>
 
-        <Passo numero={2} id="biblioteca" titulo="Montar a biblioteca de exercícios">
+        <Passo numero={2} id="biblioteca" titulo="Completar a biblioteca de exercícios">
           <p>
-            Esta é a parte que dá trabalho — e é feita <strong>uma vez só</strong>.
-            Cada exercício cadastrado aqui serve para todos os alunos, hoje e
-            daqui a cinco anos.
+            Sua biblioteca tem hoje{" "}
+            <strong>
+              {total} {total === 1 ? "exercício" : "exercícios"}
+            </strong>
+            , separados por grupo muscular.{" "}
+            {semMidia > 0 ? (
+              <>
+                Desses, <strong>{semMidia}</strong> ainda estão sem vídeo — e é
+                aí que você entra.
+              </>
+            ) : (
+              <>Todos já têm demonstração. Essa parte está feita.</>
+            )}
           </p>
           <p>
-            Na primeira vez, a tela oferece o botão{" "}
-            <B>Preencher com exercícios comuns</B>. Ele cadastra de uma vez cerca
-            de 130 exercícios de academia, já com nome e grupo muscular. Eles
-            entram sem vídeo — o vídeo é você quem escolhe.
+            Esta é a parte que dá trabalho, e é feita <strong>uma vez só</strong>
+            . Cada exercício serve para todos os alunos, hoje e daqui a cinco
+            anos.
+          </p>
+          <Rotulo>Achar o exercício</Rotulo>
+          <p>
+            Os grupos vêm fechados, com a quantidade ao lado do nome. Clique em{" "}
+            <B>Peito</B>, <B>Pernas</B> ou qualquer outro e ele abre; clique de
+            novo e fecha. A setinha à esquerda gira para mostrar o que está
+            aberto.
           </p>
           <p>
-            Depois aparece um aviso do tipo “130 de 134 estão sem demonstração”,
-            com o atalho <B>Ver só esses</B>. Essa é a sua lista de trabalho.
+            {semMidia > 0 ? (
+              <>
+                No topo aparece o aviso “{semMidia} de {total} estão sem
+                demonstração”, com o atalho <B>Ver só esses</B>. Essa é a sua
+                lista de trabalho: com o filtro ligado, os grupos já vêm abertos.
+              </>
+            ) : (
+              <>
+                Quando algum exercício estiver sem vídeo, aparece um aviso no
+                topo com o atalho <B>Ver só esses</B> — sua lista de trabalho.
+              </>
+            )}
           </p>
           <Rotulo>Para cada exercício</Rotulo>
           <Lista
@@ -80,16 +118,25 @@ export default function Page() {
                 Escreva a <B>Dica de execução</B> — é o que o aluno lê embaixo do
                 vídeo. Aqui é onde você aparece.
               </>,
+              <>
+                Ao salvar, a tela volta para a lista já aberta no grupo daquele
+                exercício, para você continuar de onde parou.
+              </>,
             ]}
           />
           <Nota titulo="Comece pequeno">
-            Não tente preencher os 130 de uma vez. Faça os 20 ou 30 que você
-            realmente usa e vá completando conforme precisar.
+            Não tente preencher tudo de uma vez. Faça os 20 ou 30 que você
+            realmente usa e vá completando conforme precisar — exercício sem
+            vídeo continua funcionando na planilha, só não tem demonstração.
           </Nota>
           <p className="text-sm text-fumaca">
             Serve link de vídeo do YouTube, imagem ou GIF. Dá para começar com uma
             imagem hoje e trocar por vídeo depois — inclusive por vídeos gravados
             por você, que é o que ninguém mais vai ter.
+          </p>
+          <p className="text-sm text-fumaca">
+            Faltou algum exercício que você usa? Use <B>Novo exercício</B> e
+            cadastre do seu jeito — ele entra sozinho no grupo muscular certo.
           </p>
         </Passo>
 
@@ -211,9 +258,9 @@ export default function Page() {
 
         <Ficha id="acompanhar" titulo="Acompanhar quem treina">
           <p>
-            O painel abre com o cartão <B>Quem sumiu</B>, mostrando só quem passou
-            de 7 dias sem treinar. Os que estão em dia ficam guardados atrás de
-            “ver os outros”.
+            Logo abaixo dos números, o painel mostra o cartão <B>Quem sumiu</B>{" "}
+            com quem passou de 7 dias sem treinar. Os que estão em dia ficam
+            guardados atrás de “ver os outros”.
           </p>
           <ul className="space-y-2 text-sm">
             <li className="flex items-baseline gap-3">
