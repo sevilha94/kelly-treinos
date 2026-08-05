@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { MEDIDAS } from "@/lib/tipos";
+import { copiarTreinos } from "@/lib/copiaPlanilha";
 
 export type EstadoAluno = { erro?: string };
 
@@ -157,6 +159,18 @@ export async function criarTreino(formData: FormData) {
   revalidatePath(`/painel/alunos/${alunoId}`);
 }
 
+export async function copiarPlanilha(formData: FormData) {
+  const supabase = await exigirLogin();
+  const destinoId = String(formData.get("aluno_id") ?? "");
+  const origemId = texto(formData, "origem_id");
+
+  if (!origemId) return;
+
+  await copiarTreinos(supabase, origemId, destinoId);
+
+  revalidatePath(`/painel/alunos/${destinoId}`);
+}
+
 export async function arquivarTreino(formData: FormData) {
   const supabase = await exigirLogin();
   const alunoId = String(formData.get("aluno_id") ?? "");
@@ -262,6 +276,63 @@ export async function moverItem(formData: FormData) {
     .from("treino_exercicio")
     .update({ ordem: item.ordem })
     .eq("id", vizinho.id);
+
+  revalidatePath(`/painel/alunos/${alunoId}`);
+}
+
+// ---------------------------------------------------------------------------
+// AVALIACAO FISICA
+// ---------------------------------------------------------------------------
+
+export async function salvarAvaliacao(formData: FormData) {
+  const supabase = await exigirLogin();
+  const alunoId = String(formData.get("aluno_id") ?? "");
+
+  const medidas: Record<string, number | null> = {};
+  for (const { campo } of MEDIDAS) medidas[campo] = numero(formData, campo);
+
+  const pesoKg = medidas.peso_kg;
+  const alturaCm = numero(formData, "altura_cm");
+
+  const dados = {
+    ...medidas,
+    aluno_id: alunoId,
+    data: texto(formData, "data") ?? new Date().toISOString().slice(0, 10),
+    altura_cm: alturaCm,
+    observacoes: texto(formData, "observacoes"),
+  };
+
+  const id = texto(formData, "avaliacao_id");
+  if (id) {
+    await supabase.from("avaliacao").update(dados).eq("id", id);
+  } else {
+    await supabase.from("avaliacao").insert(dados);
+  }
+
+  // peso e altura tambem sobem para o cadastro do aluno, que e onde as outras
+  // telas leem o valor mais recente
+  if (pesoKg || alturaCm) {
+    await supabase
+      .from("aluno")
+      .update({
+        ...(pesoKg ? { peso_kg: pesoKg } : {}),
+        ...(alturaCm ? { altura_cm: alturaCm } : {}),
+        atualizado_em: new Date().toISOString(),
+      })
+      .eq("id", alunoId);
+  }
+
+  revalidatePath(`/painel/alunos/${alunoId}`);
+}
+
+export async function arquivarAvaliacao(formData: FormData) {
+  const supabase = await exigirLogin();
+  const alunoId = String(formData.get("aluno_id") ?? "");
+
+  await supabase
+    .from("avaliacao")
+    .update({ arquivado_em: new Date().toISOString() })
+    .eq("id", String(formData.get("avaliacao_id") ?? ""));
 
   revalidatePath(`/painel/alunos/${alunoId}`);
 }

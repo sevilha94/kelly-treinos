@@ -6,10 +6,15 @@ import { registrarAcesso } from "@/lib/acessos";
 import { MidiaExercicio } from "@/componentes/MidiaExercicio";
 import { Marca } from "@/componentes/Marca";
 import { marcarExercicio, finalizarTreino } from "./actions";
+import { historicoDeCargas, formataCarga, type MarcaDeCarga } from "@/lib/cargas";
 import {
   DIAS_SEMANA,
+  MEDIDAS,
+  calculaImc,
+  formataData,
   nomeExibido,
   type Aluno,
+  type Avaliacao,
   type Treino,
 } from "@/lib/tipos";
 
@@ -101,7 +106,19 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
     treinos.find((item) => item.id === treinoDeHoje) ??
     treinos[0];
 
-  const marcacoes = await marcacoesDeHoje(aluno.id, treino.id);
+  const [marcacoes, historico, avaliacoesRes] = await Promise.all([
+    marcacoesDeHoje(aluno.id, treino.id),
+    // sem o dia de hoje: "ultima vez" tem que ser o treino anterior
+    historicoDeCargas(supabase, aluno.id, dataDeHoje()),
+    supabase
+      .from("avaliacao")
+      .select("*")
+      .eq("aluno_id", aluno.id)
+      .is("arquivado_em", null)
+      .order("data", { ascending: false })
+      .limit(2),
+  ]);
+  const avaliacoes = (avaliacoesRes.data ?? []) as Avaliacao[];
   const feitos = treino.itens.filter((item) => marcacoes.get(item.id)?.feito);
 
   return (
@@ -145,6 +162,8 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
         {treino.itens.map((item) => {
           const marcacao = marcacoes.get(item.id);
           const feito = marcacao?.feito ?? false;
+          const marcas = historico.get(item.id) ?? [];
+          const ultima = marcas[0];
 
           return (
             <li key={item.id} className={feito ? "bg-grafite/40" : undefined}>
@@ -168,6 +187,7 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
                     </span>
                     <span className="text-xs text-fumaca">
                       {item.series} séries · {item.repeticoes} repetições
+                      {ultima && ` · última: ${formataCarga(ultima.carga)} kg`}
                     </span>
                   </span>
                   <span aria-hidden className="text-lg text-sangue">
@@ -190,6 +210,8 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
                     <p className="text-sm text-fumaca">{item.observacao}</p>
                   )}
 
+                  <Evolucao marcas={marcas} />
+
                   <form action={marcarExercicio} className="flex items-end gap-2">
                     <input type="hidden" name="token" value={token} />
                     <input type="hidden" name="treino_id" value={treino.id} />
@@ -202,7 +224,7 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
                         name="carga_kg"
                         inputMode="decimal"
                         defaultValue={marcacao?.carga_kg ?? ""}
-                        placeholder="—"
+                        placeholder={ultima ? formataCarga(ultima.carga) : "—"}
                         className="w-full rounded-lg border border-borda bg-grafite px-3 py-2.5 text-base text-gelo focus:border-sangue focus:outline-none"
                       />
                     </label>
@@ -225,6 +247,8 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
         })}
       </ul>
 
+      <MinhasMedidas avaliacoes={avaliacoes} />
+
       <form action={finalizarTreino} className="px-5 py-6">
         <input type="hidden" name="token" value={token} />
         <input type="hidden" name="treino_id" value={treino.id} />
@@ -237,6 +261,128 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
         Você é o responsável pela sua mudança
       </p>
     </Moldura>
+  );
+}
+
+/**
+ * As medidas da ultima avaliacao, com quanto mudou desde a anterior. Fica
+ * recolhido: quem abriu o app quer treinar, e ver medida e outra intencao.
+ */
+function MinhasMedidas({ avaliacoes }: { avaliacoes: Avaliacao[] }) {
+  if (avaliacoes.length === 0) return null;
+
+  const [atual, anterior] = avaliacoes;
+  const linhas = MEDIDAS.filter(
+    ({ campo }) => (atual[campo] as number | null) !== null,
+  );
+
+  const imcAtual = calculaImc(atual.peso_kg, atual.altura_cm);
+  if (linhas.length === 0 && imcAtual === null) return null;
+
+  return (
+    <details className="border-b border-borda">
+      <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4">
+        <span className="text-sm uppercase tracking-wider text-fumaca">
+          Minhas medidas
+        </span>
+        <span className="text-xs text-fumaca">
+          {formataData(atual.data)} ▸
+        </span>
+      </summary>
+
+      <ul className="space-y-1.5 px-5 pb-5">
+        {linhas.map(({ campo, rotulo, unidade }) => {
+          const valor = atual[campo] as number;
+          const antes = anterior?.[campo] as number | null | undefined;
+          const delta =
+            antes === null || antes === undefined
+              ? null
+              : Math.round((Number(valor) - Number(antes)) * 10) / 10;
+
+          return (
+            <li key={campo} className="flex items-baseline justify-between gap-3">
+              <span className="text-sm text-fumaca">{rotulo}</span>
+              <span className="text-sm tabular-nums">
+                {formataCarga(Number(valor))}
+                {unidade && (
+                  <span className="text-xs text-fumaca"> {unidade}</span>
+                )}
+                {delta !== null && delta !== 0 && (
+                  <span className="ml-2 text-xs text-fumaca">
+                    {delta > 0 ? "+" : "−"}
+                    {formataCarga(Math.abs(delta))}
+                  </span>
+                )}
+              </span>
+            </li>
+          );
+        })}
+
+        {imcAtual !== null && (
+          <li className="flex items-baseline justify-between gap-3">
+            <span className="text-sm text-fumaca">IMC</span>
+            <span className="text-sm tabular-nums">{formataCarga(imcAtual)}</span>
+          </li>
+        )}
+      </ul>
+    </details>
+  );
+}
+
+/**
+ * Evolucao de carga daquele exercicio. So aparece a partir da segunda marcacao,
+ * porque com um ponto so nao ha o que comparar. As barras vao da mais antiga
+ * para a mais recente, que e como a pessoa le progresso.
+ */
+function Evolucao({ marcas }: { marcas: MarcaDeCarga[] }) {
+  if (marcas.length < 2) return null;
+
+  const ultimas = marcas.slice(0, 8).reverse();
+  const maior = Math.max(...ultimas.map((m) => m.carga));
+  const primeira = ultimas[0].carga;
+  const atual = ultimas[ultimas.length - 1].carga;
+  const diferenca = Math.round((atual - primeira) * 10) / 10;
+
+  return (
+    <div className="rounded-lg border border-borda bg-grafite/60 px-3 py-3">
+      <div className="mb-2 flex items-baseline justify-between gap-2">
+        <span className="text-[10px] uppercase tracking-widest text-fumaca">
+          Sua evolução
+        </span>
+        {diferenca !== 0 && (
+          <span
+            className={`text-xs ${diferenca > 0 ? "text-sangue-claro" : "text-fumaca"}`}
+          >
+            {diferenca > 0 ? "+" : "−"}
+            {formataCarga(Math.abs(diferenca))} kg desde{" "}
+            {formataData(ultimas[0].data)}
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-end gap-1.5">
+        {ultimas.map((marca, indice) => {
+          const altura = Math.max(8, Math.round((marca.carga / maior) * 44));
+          const ehUltima = indice === ultimas.length - 1;
+
+          return (
+            <div key={`${marca.data}-${indice}`} className="flex-1 text-center">
+              <span className="mb-1 block text-[10px] text-fumaca">
+                {formataCarga(marca.carga)}
+              </span>
+              <span
+                aria-hidden
+                style={{ height: `${altura}px` }}
+                className={`block w-full rounded-sm ${ehUltima ? "bg-sangue" : "bg-borda"}`}
+              />
+              <span className="mt-1 block text-[9px] text-fumaca">
+                {formataData(marca.data).slice(0, 5)}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -264,9 +410,13 @@ function diaDaSemanaAtual() {
   return domingoZero === 0 ? 7 : domingoZero;
 }
 
+function dataDeHoje() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 async function marcacoesDeHoje(alunoId: string, treinoId: string) {
   const supabase = createAdminClient();
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = dataDeHoje();
 
   const { data: sessao } = await supabase
     .from("sessao")

@@ -9,13 +9,16 @@ import { EditorDeTreino } from "./EditorDeTreino";
 import {
   alternarAcesso,
   arquivarAluno,
+  copiarPlanilha,
   criarTreino,
   gerarNovoLink,
   salvarAgenda,
 } from "../actions";
+import { Avaliacoes } from "./Avaliacoes";
 import {
   DIAS_SEMANA,
   type Aluno,
+  type Avaliacao,
   type Exercicio,
   type Treino,
 } from "@/lib/tipos";
@@ -24,44 +27,63 @@ export default async function Page(props: PageProps<"/painel/alunos/[id]">) {
   const { id } = await props.params;
   const supabase = await createClient();
 
-  const [alunoRes, treinosRes, agendaRes, bibliotecaRes, acessosRes] =
-    await Promise.all([
-      supabase
-        .from("aluno")
-        .select("*")
-        .eq("id", id)
-        .is("arquivado_em", null)
-        .maybeSingle(),
-      supabase
-        .from("treino")
-        .select(
-          `id, letra, titulo, ordem,
+  const [
+    alunoRes,
+    treinosRes,
+    agendaRes,
+    bibliotecaRes,
+    acessosRes,
+    outrosRes,
+    avaliacoesRes,
+  ] = await Promise.all([
+    supabase
+      .from("aluno")
+      .select("*")
+      .eq("id", id)
+      .is("arquivado_em", null)
+      .maybeSingle(),
+    supabase
+      .from("treino")
+      .select(
+        `id, letra, titulo, ordem,
          itens:treino_exercicio(
            id, apelido, series, repeticoes, observacao, ordem,
            exercicio:exercicio_id(id, nome, grupo_muscular, midia_url, dica)
          )`,
-        )
-        .eq("aluno_id", id)
-        .is("arquivado_em", null)
-        .is("itens.arquivado_em", null)
-        .order("ordem")
-        .order("ordem", { referencedTable: "treino_exercicio" }),
-      supabase
-        .from("aluno_agenda")
-        .select("dia_semana, treino_id")
-        .eq("aluno_id", id),
-      supabase
-        .from("exercicio")
-        .select("id, nome, grupo_muscular, midia_url, dica")
-        .is("arquivado_em", null)
-        .order("grupo_muscular")
-        .order("nome"),
-      supabase
-        .from("aluno_acesso")
-        .select("dispositivo_id, aparelho, ultimo_em, visitas")
-        .eq("aluno_id", id)
-        .order("ultimo_em", { ascending: false }),
-    ]);
+      )
+      .eq("aluno_id", id)
+      .is("arquivado_em", null)
+      .is("itens.arquivado_em", null)
+      .order("ordem")
+      .order("ordem", { referencedTable: "treino_exercicio" }),
+    supabase
+      .from("aluno_agenda")
+      .select("dia_semana, treino_id")
+      .eq("aluno_id", id),
+    supabase
+      .from("exercicio")
+      .select("id, nome, grupo_muscular, midia_url, dica")
+      .is("arquivado_em", null)
+      .order("grupo_muscular")
+      .order("nome"),
+    supabase
+      .from("aluno_acesso")
+      .select("dispositivo_id, aparelho, ultimo_em, visitas")
+      .eq("aluno_id", id)
+      .order("ultimo_em", { ascending: false }),
+    supabase
+      .from("aluno")
+      .select("id, nome")
+      .is("arquivado_em", null)
+      .neq("id", id)
+      .order("nome"),
+    supabase
+      .from("avaliacao")
+      .select("*")
+      .eq("aluno_id", id)
+      .is("arquivado_em", null)
+      .order("data", { ascending: false }),
+  ]);
 
   if (!alunoRes.data) notFound();
 
@@ -69,6 +91,8 @@ export default async function Page(props: PageProps<"/painel/alunos/[id]">) {
   const treinos = (treinosRes.data ?? []) as unknown as Treino[];
   const biblioteca = (bibliotecaRes.data ?? []) as Exercicio[];
   const acessos = (acessosRes.data ?? []) as Acesso[];
+  const outros = (outrosRes.data ?? []) as { id: string; nome: string }[];
+  const avaliacoes = (avaliacoesRes.data ?? []) as Avaliacao[];
   const agenda = new Map(
     (agendaRes.data ?? []).map((linha) => [linha.dia_semana, linha.treino_id]),
   );
@@ -132,6 +156,14 @@ export default async function Page(props: PageProps<"/painel/alunos/[id]">) {
         </p>
       )}
 
+      <Avaliacoes
+        alunoId={aluno.id}
+        avaliacoes={avaliacoes}
+        alturaAtual={aluno.altura_cm}
+      />
+
+      <CopiarDeOutroAluno alunoId={aluno.id} outros={outros} />
+
       {treinos.map((treino) => (
         <EditorDeTreino
           key={treino.id}
@@ -178,6 +210,52 @@ async function origemDoSite() {
     cabecalhos.get("x-forwarded-proto") ??
     (host?.startsWith("localhost") ? "http" : "https");
   return `${protocolo}://${host}`;
+}
+
+function CopiarDeOutroAluno({
+  alunoId,
+  outros,
+}: {
+  alunoId: string;
+  outros: { id: string; nome: string }[];
+}) {
+  if (outros.length === 0) return null;
+
+  return (
+    <details className="rounded-2xl border border-borda bg-carvao">
+      <summary className="cursor-pointer px-4 py-3 text-sm uppercase tracking-wider text-fumaca hover:text-gelo">
+        Copiar planilha de outro aluno
+      </summary>
+      <form action={copiarPlanilha} className="space-y-3 px-4 pb-4">
+        <input type="hidden" name="aluno_id" value={alunoId} />
+        <label className="block">
+          <span className="mb-1 block text-[10px] uppercase tracking-widest text-fumaca">
+            Copiar os treinos de
+          </span>
+          <select
+            name="origem_id"
+            required
+            className="w-full rounded-lg border border-borda bg-grafite px-3 py-2.5 text-base text-gelo focus:border-sangue focus:outline-none"
+          >
+            <option value="">Escolha o aluno...</option>
+            {outros.map((outro) => (
+              <option key={outro.id} value={outro.id}>
+                {outro.nome}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="text-xs leading-relaxed text-fumaca">
+          Traz os treinos com exercícios, séries e repetições, e você ajusta o
+          que for diferente depois. Os treinos que já têm exercício aqui não são
+          tocados — a cópia entra depois deles. A agenda da semana não vem junto.
+        </p>
+        <button className="h-10 rounded-lg bg-sangue px-4 text-xs font-semibold uppercase tracking-wider text-white hover:bg-sangue-claro">
+          Copiar
+        </button>
+      </form>
+    </details>
+  );
 }
 
 type Acesso = {
