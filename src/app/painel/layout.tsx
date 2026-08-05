@@ -29,6 +29,12 @@ export default function Layout({ children }: LayoutProps<"/painel">) {
           >
             Exercícios
           </Link>
+          <Link
+            href="/painel/ajuda"
+            className="rounded-lg px-3 py-1.5 uppercase tracking-wider text-fumaca hover:bg-grafite hover:text-gelo"
+          >
+            Ajuda
+          </Link>
         </nav>
       </header>
       <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-6">
