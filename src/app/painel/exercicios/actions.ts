@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { EXERCICIOS_COMUNS } from "@/lib/exerciciosComuns";
+import { comunsFaltando } from "@/lib/exerciciosComuns";
 import { idDoGrupo } from "@/lib/tipos";
 
 export type EstadoExercicio = { erro?: string };
@@ -68,12 +68,8 @@ export async function preencherBiblioteca(): Promise<void> {
     .select("nome")
     .is("arquivado_em", null);
 
-  const jaTem = new Set(
-    (existentes ?? []).map((linha) => chaveDoNome(linha.nome)),
-  );
-
-  const novos = EXERCICIOS_COMUNS.filter(
-    ({ nome }) => !jaTem.has(chaveDoNome(nome)),
+  const novos = comunsFaltando(
+    (existentes ?? []).map((linha) => linha.nome),
   ).map(({ nome, grupo }) => ({
     nome,
     grupo_muscular: grupo,
@@ -89,13 +85,6 @@ export async function preencherBiblioteca(): Promise<void> {
   revalidatePath("/painel");
 }
 
-function chaveDoNome(nome: string) {
-  return nome
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .trim();
-}
 
 export async function arquivarExercicio(formData: FormData) {
   const supabase = await exigirLogin();

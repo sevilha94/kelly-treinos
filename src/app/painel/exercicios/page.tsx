@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Cartao, Vazio } from "@/componentes/Cartao";
 import { lerMidia } from "@/lib/midia";
 import { preencherBiblioteca } from "./actions";
+import { comunsFaltando } from "@/lib/exerciciosComuns";
 import { idDoGrupo, type Exercicio } from "@/lib/tipos";
 
 export default async function Page(props: PageProps<"/painel/exercicios">) {
@@ -21,6 +22,7 @@ export default async function Page(props: PageProps<"/painel/exercicios">) {
 
   const todos = (data ?? []) as Exercicio[];
   const semMidia = todos.filter((ex) => !ex.midia_url?.trim());
+  const faltando = comunsFaltando(todos.map((ex) => ex.nome));
   const exercicios = soSemMidia ? semMidia : todos;
   const porGrupo = agruparPorGrupo(exercicios);
 
@@ -56,27 +58,30 @@ export default async function Page(props: PageProps<"/painel/exercicios">) {
         </Cartao>
       ) : (
         <>
-          <details className="rounded-2xl border border-borda bg-carvao">
-            <summary className="cursor-pointer px-4 py-3 text-sm uppercase tracking-wider text-fumaca hover:text-gelo">
-              Adicionar os exercícios comuns de academia
-            </summary>
-            <div className="space-y-3 px-4 pb-4">
-              <p className="text-sm leading-relaxed text-fumaca">
-                Cadastra de uma vez cerca de 130 exercícios com nome e grupo
-                muscular já preenchidos, para você não precisar digitar um por
-                um. Eles entram sem vídeo — o vídeo é você quem escolhe depois.
-              </p>
-              <form action={preencherBiblioteca}>
-                <button className="h-10 rounded-lg bg-sangue px-4 text-xs font-semibold uppercase tracking-wider text-white hover:bg-sangue-claro">
-                  Preencher com exercícios comuns
-                </button>
-              </form>
-              <p className="text-xs text-fumaca">
-                Não apaga nem altera nada do que você já cadastrou, e o que já
-                existe não entra duplicado. Pode clicar sem medo.
-              </p>
-            </div>
-          </details>
+          {/* some sozinho quando nao falta nenhum: ja cumpriu o papel */}
+          {faltando.length > 0 && (
+            <details className="rounded-2xl border border-borda bg-carvao">
+              <summary className="cursor-pointer px-4 py-3 text-sm uppercase tracking-wider text-fumaca hover:text-gelo">
+                Faltam {faltando.length} exercícios comuns de academia
+              </summary>
+              <div className="space-y-3 px-4 pb-4">
+                <p className="text-sm leading-relaxed text-fumaca">
+                  Cadastra de uma vez os {faltando.length} que ainda não estão
+                  aqui, com nome e grupo muscular já preenchidos. Eles entram sem
+                  vídeo — o vídeo é você quem escolhe depois.
+                </p>
+                <form action={preencherBiblioteca}>
+                  <button className="h-10 rounded-lg bg-sangue px-4 text-xs font-semibold uppercase tracking-wider text-white hover:bg-sangue-claro">
+                    Adicionar os que faltam
+                  </button>
+                </form>
+                <p className="text-xs text-fumaca">
+                  Não apaga nem altera nada do que você já cadastrou. Pode clicar
+                  sem medo.
+                </p>
+              </div>
+            </details>
+          )}
 
           {semMidia.length > 0 && (
             <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-borda bg-carvao px-4 py-3">

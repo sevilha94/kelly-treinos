@@ -187,3 +187,26 @@ export const EXERCICIOS_COMUNS: { nome: string; grupo: string }[] = [
 function comGrupo(grupo: string, nomes: string[]) {
   return nomes.map((nome) => ({ nome, grupo }));
 }
+
+/**
+ * Compara sem acento e sem maiuscula, para "Supino Reto Barra" digitado a mao
+ * nao virar duplicata de "Supino reto barra".
+ */
+function chaveDoNome(nome: string) {
+  return nome
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+/**
+ * Quais exercicios comuns ainda nao estao na biblioteca.
+ *
+ * Serve para duas coisas: a acao sabe o que inserir e a tela sabe se ainda
+ * vale mostrar o botao — quando nao falta nenhum, ele some sozinho.
+ */
+export function comunsFaltando(nomesJaCadastrados: string[]) {
+  const jaTem = new Set(nomesJaCadastrados.map(chaveDoNome));
+  return EXERCICIOS_COMUNS.filter(({ nome }) => !jaTem.has(chaveDoNome(nome)));
+}
