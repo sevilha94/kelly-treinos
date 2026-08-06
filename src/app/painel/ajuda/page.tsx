@@ -177,6 +177,11 @@ export default async function Page() {
               </>,
               <>Para mudar algo depois, clique em cima do exercício e ele se abre.</>,
               <>
+                Preencha o <B>Descanso (segundos)</B> e o aluno ganha um
+                cronômetro naquele exercício, para não ficar olhando o relógio
+                entre as séries.
+              </>,
+              <>
                 Use <B>↑ subir</B> e <B>↓ descer</B> para deixar na ordem em que
                 ele vai executar.
               </>,
@@ -260,6 +265,11 @@ export default async function Page() {
                 desfazer se tocou sem querer.
               </>,
               <>
+                Depois de finalizar, ele diz como foi:{" "}
+                <B>fácil</B>, <B>na medida</B> ou <B>puxado</B>, com um
+                comentário opcional. Você lê isso no histórico dele.
+              </>,
+              <>
                 <B>Minhas medidas</B>, se você já tiver feito avaliação física.
               </>,
             ]}
@@ -295,6 +305,35 @@ export default async function Page() {
             dias — bom para diferenciar quem sumiu agora de quem nunca foi
             constante.
           </p>
+        </Ficha>
+
+        <Ficha id="historico" titulo="Histórico de um aluno">
+          <p>
+            Dentro do aluno, o botão <B>Ver histórico</B> abre três coisas que
+            ajudam a decidir o próximo passo dele.
+          </p>
+          <Lista
+            itens={[
+              <>
+                <strong>Treinos por semana</strong> nas últimas oito semanas —
+                mostra se a constância caiu antes de ele sumir de vez.
+              </>,
+              <>
+                <strong>Evolução de carga</strong>, exercício por exercício, do
+                primeiro registro até o último. Quem mais evoluiu aparece em
+                cima; quem está parado há semanas fica evidente lá embaixo.
+              </>,
+              <>
+                <strong>Como ele avaliou os treinos</strong> — fácil, na medida
+                ou puxado, com os comentários que ele escreveu.
+              </>,
+            ]}
+          />
+          <Nota titulo="Onde isso vira decisão">
+            Carga parada há seis semanas com “fácil” em todos os treinos é o
+            momento de mudar o estímulo. Esse cruzamento é o que justifica o
+            acompanhamento.
+          </Nota>
         </Ficha>
 
         <Ficha id="avaliacao" titulo="Avaliação física">
@@ -420,6 +459,7 @@ function Indice() {
   const consulta = [
     ["aluno-ve", "O que o aluno vê"],
     ["acompanhar", "Acompanhar quem treina"],
+    ["historico", "Histórico de um aluno"],
     ["avaliacao", "Avaliação física"],
     ["mensalidade", "Mensalidade"],
     ["acesso", "Controlar o acesso"],

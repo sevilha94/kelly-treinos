@@ -30,7 +30,7 @@ export async function copiarTreinos(
     .from("treino")
     .select(
       `letra, titulo, ordem,
-       itens:treino_exercicio(exercicio_id, apelido, series, repeticoes, observacao, ordem)`,
+       itens:treino_exercicio(exercicio_id, apelido, series, repeticoes, observacao, descanso_segundos, ordem)`,
     )
     .eq("aluno_id", origemId)
     .is("arquivado_em", null)
@@ -86,6 +86,7 @@ export async function copiarTreinos(
         series: item.series,
         repeticoes: item.repeticoes,
         observacao: item.observacao,
+        descanso_segundos: item.descanso_segundos,
         ordem: item.ordem,
       })),
     );

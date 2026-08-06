@@ -5,12 +5,14 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { registrarAcesso, COOKIE_DISPOSITIVO } from "@/lib/acessos";
-import { carregarSessoes } from "@/lib/sessoes";
+import { carregarSessoes, formataCarga, type MarcaDeCarga } from "@/lib/sessoes";
 import { BotaoFinalizar } from "./BotaoFinalizar";
+import { CronometroDescanso } from "./CronometroDescanso";
+import { Feedback } from "./Feedback";
 import { MidiaExercicio } from "@/componentes/MidiaExercicio";
 import { Marca } from "@/componentes/Marca";
 import { marcarExercicio, finalizarTreino } from "./actions";
-import { formataCarga, type MarcaDeCarga } from "@/lib/cargas";
+
 import {
   deveBloquearPorAtraso,
   nomeDaCompetencia,
@@ -109,7 +111,7 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
         .select(
           `id, letra, titulo, ordem,
          itens:treino_exercicio(
-           id, apelido, series, repeticoes, observacao, ordem,
+           id, apelido, series, repeticoes, observacao, descanso_segundos, ordem,
            exercicio:exercicio_id(id, nome, grupo_muscular, midia_url, dica)
          )`,
         )
@@ -178,12 +180,8 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
     treinos.find((item) => item.id === treinoDeHoje) ??
     treinos[0];
 
-  const { finalizadaEm, marcacoes, historico } = await carregarSessoes(
-    supabase,
-    aluno.id,
-    treino.id,
-    dataDeHoje(),
-  );
+  const { finalizadaEm, percepcao, comentario, marcacoes, historico } =
+    await carregarSessoes(supabase, aluno.id, treino.id, dataDeHoje());
 
   const avaliacoes = (avaliacoesRes.data ?? []) as Avaliacao[];
   const feitos = treino.itens.filter((item) => marcacoes.get(item.id)?.feito);
@@ -277,6 +275,10 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
                     <p className="text-sm text-fumaca">{item.observacao}</p>
                   )}
 
+                  {item.descanso_segundos ? (
+                    <CronometroDescanso segundos={item.descanso_segundos} />
+                  ) : null}
+
                   <Evolucao marcas={marcas} />
 
                   <form action={marcarExercicio} className="flex items-end gap-2">
@@ -328,6 +330,14 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
               Você finalizou às {horaDe(finalizadaEm)}. A Kelly já está vendo
               aqui.
             </p>
+
+            <Feedback
+              token={token}
+              treinoId={treino.id}
+              percepcao={percepcao}
+              comentario={comentario}
+            />
+
             <form action={finalizarTreino}>
               <input type="hidden" name="token" value={token} />
               <input type="hidden" name="treino_id" value={treino.id} />

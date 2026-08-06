@@ -51,7 +51,7 @@ export default async function Page(props: PageProps<"/painel/alunos/[id]">) {
       .select(
         `id, letra, titulo, ordem,
          itens:treino_exercicio(
-           id, apelido, series, repeticoes, observacao, ordem,
+           id, apelido, series, repeticoes, observacao, descanso_segundos, ordem,
            exercicio:exercicio_id(id, nome, grupo_muscular, midia_url, dica)
          )`,
       )
@@ -117,7 +117,15 @@ export default async function Page(props: PageProps<"/painel/alunos/[id]">) {
       >
         ‹ Voltar para os alunos
       </Link>
-      <h1 className="titulo-marca text-3xl">{aluno.nome}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="titulo-marca text-3xl">{aluno.nome}</h1>
+        <Link
+          href={`/painel/alunos/${aluno.id}/historico`}
+          className="inline-flex h-10 items-center rounded-lg border border-borda px-4 text-xs font-semibold uppercase tracking-wider text-gelo hover:border-fumaca"
+        >
+          Ver histórico
+        </Link>
+      </div>
       <p className="text-sm text-fumaca">
         Cada botão salva na hora — não existe um “salvar tudo” no final. Pode
         fechar a página quando quiser que nada se perde.

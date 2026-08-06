@@ -94,6 +94,38 @@ export async function marcarExercicio(formData: FormData) {
   revalidatePath(`/aluno/${token}`);
 }
 
+const PERCEPCOES = ["facil", "na_medida", "puxado"] as const;
+
+/** Como o treino de hoje foi para o aluno. E o que a Kelly nao tinha como saber. */
+export async function enviarFeedback(formData: FormData) {
+  const token = String(formData.get("token") ?? "");
+  const contexto = await alunoDoToken(token);
+  if (!contexto) return;
+
+  const sessaoId = await sessaoDeHoje(
+    contexto,
+    String(formData.get("treino_id") ?? ""),
+  );
+  if (!sessaoId) return;
+
+  const escolha = String(formData.get("percepcao") ?? "");
+  const percepcao = PERCEPCOES.includes(escolha as (typeof PERCEPCOES)[number])
+    ? escolha
+    : null;
+
+  const comentario = String(formData.get("comentario") ?? "").trim();
+
+  await contexto.supabase
+    .from("sessao")
+    .update({
+      ...(percepcao ? { percepcao } : {}),
+      ...(formData.has("comentario") ? { comentario: comentario || null } : {}),
+    })
+    .eq("id", sessaoId);
+
+  revalidatePath(`/aluno/${token}`);
+}
+
 export async function finalizarTreino(formData: FormData) {
   const token = String(formData.get("token") ?? "");
   const contexto = await alunoDoToken(token);

@@ -4,7 +4,7 @@
  * video dela aos poucos, sem mexer em nada aqui.
  */
 export type Midia =
-  | { tipo: "youtube"; embedUrl: string }
+  | { tipo: "youtube"; embedUrl: string; capaUrl: string }
   | { tipo: "video"; url: string }
   | { tipo: "imagem"; url: string }
   | { tipo: "vazio" };
@@ -21,6 +21,8 @@ export function lerMidia(url: string | null | undefined): Midia {
     return {
       tipo: "youtube",
       embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1&loop=1&playlist=${id}`,
+      // capa estatica: pesa alguns KB no lugar de um player inteiro
+      capaUrl: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
     };
   }
 

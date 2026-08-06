@@ -121,17 +121,34 @@ export function EditorDeTreino({
                     </label>
                   </div>
 
-                  <label className="block">
-                    <span className="mb-1 block text-[10px] uppercase tracking-widest text-fumaca">
-                      Observação para o aluno
-                    </span>
-                    <input
-                      name="observacao"
-                      defaultValue={item.observacao ?? ""}
-                      placeholder="Descanso de 60 segundos"
-                      className={ENTRADA}
-                    />
-                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="block">
+                      <span className="mb-1 block text-[10px] uppercase tracking-widest text-fumaca">
+                        Descanso (segundos)
+                      </span>
+                      <input
+                        name="descanso_segundos"
+                        inputMode="numeric"
+                        defaultValue={item.descanso_segundos ?? ""}
+                        placeholder="60"
+                        className={ENTRADA}
+                      />
+                      <span className="mt-1 block text-xs text-fumaca">
+                        Vira um cronômetro na tela dele.
+                      </span>
+                    </label>
+                    <label className="block">
+                      <span className="mb-1 block text-[10px] uppercase tracking-widest text-fumaca">
+                        Observação para o aluno
+                      </span>
+                      <input
+                        name="observacao"
+                        defaultValue={item.observacao ?? ""}
+                        placeholder="Segurar 2s no topo"
+                        className={ENTRADA}
+                      />
+                    </label>
+                  </div>
 
                   <div className="flex flex-wrap items-center gap-2">
                     <BotaoSalvar />

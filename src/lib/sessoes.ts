@@ -1,11 +1,31 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { MarcaDeCarga } from "./cargas";
+
 
 export type Marcacao = { feito: boolean; carga_kg: number | null };
+
+export type MarcaDeCarga = { data: string; carga: number };
+
+/** Sem casa decimal quando o numero e redondo: 30 kg, nao 30,0 kg. */
+export function formataCarga(carga: number): string {
+  const arredondado = Math.round(carga * 10) / 10;
+  return Number.isInteger(arredondado)
+    ? String(arredondado)
+    : arredondado.toFixed(1).replace('.', ',');
+}
+
+export type Percepcao = "facil" | "na_medida" | "puxado";
+
+export const ROTULO_PERCEPCAO: Record<Percepcao, string> = {
+  facil: "Fácil",
+  na_medida: "Na medida",
+  puxado: "Puxado",
+};
 
 export type Sessoes = {
   /** Quando o aluno finalizou o treino de hoje, se finalizou. */
   finalizadaEm: string | null;
+  percepcao: Percepcao | null;
+  comentario: string | null;
   /** O que ele marcou hoje, por exercicio da planilha. */
   marcacoes: Map<string, Marcacao>;
   /** Cargas anteriores de cada exercicio, da mais recente para a mais antiga. */
@@ -35,7 +55,7 @@ export async function carregarSessoes(
 
   const { data: sessoes } = await supabase
     .from("sessao")
-    .select("id, data, treino_id, finalizada_em")
+    .select("id, data, treino_id, finalizada_em, percepcao, comentario")
     .eq("aluno_id", alunoId)
     .gte("data", desde.toISOString().slice(0, 10))
     .order("data", { ascending: false })
@@ -43,6 +63,8 @@ export async function carregarSessoes(
 
   const vazio: Sessoes = {
     finalizadaEm: null,
+    percepcao: null,
+    comentario: null,
     marcacoes: new Map(),
     historico: new Map(),
   };
@@ -88,6 +110,8 @@ export async function carregarSessoes(
 
   return {
     finalizadaEm: deHoje?.finalizada_em ?? null,
+    percepcao: deHoje?.percepcao ?? null,
+    comentario: deHoje?.comentario ?? null,
     marcacoes,
     historico,
   };

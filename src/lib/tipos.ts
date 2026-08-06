@@ -31,6 +31,8 @@ export type ItemDoTreino = {
   series: string;
   repeticoes: string;
   observacao: string | null;
+  /** Descanso entre series, em segundos. Vazio = a Kelly nao definiu. */
+  descanso_segundos: number | null;
   ordem: number;
   exercicio: Exercicio;
 };

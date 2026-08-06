@@ -207,6 +207,7 @@ export async function adicionarItem(formData: FormData) {
     exercicio_id: exercicioId,
     series: texto(formData, "series") ?? "4",
     repeticoes: texto(formData, "repeticoes") ?? "12",
+    descanso_segundos: numero(formData, "descanso_segundos"),
     ordem: count ?? 0,
   });
 
@@ -225,6 +226,7 @@ export async function salvarItem(formData: FormData) {
       series: texto(formData, "series") ?? "4",
       repeticoes: texto(formData, "repeticoes") ?? "12",
       observacao: texto(formData, "observacao"),
+      descanso_segundos: numero(formData, "descanso_segundos"),
     })
     .eq("id", String(formData.get("item_id") ?? ""));
 
