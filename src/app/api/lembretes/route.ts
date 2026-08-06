@@ -65,11 +65,14 @@ export async function GET(request: Request) {
           "aluno_id",
           agenda.map((linha) => linha.aluno_id),
         ),
+      // 60 dias para conseguir dizer ha quanto tempo o aluno sumiu, nao so se
+      // ele treinou hoje
       supabase
         .from("sessao")
-        .select("aluno_id")
-        .eq("data", hojeLocal)
-        .not("finalizada_em", "is", null),
+        .select("aluno_id, data")
+        .not("finalizada_em", "is", null)
+        .gte("data", diasAntes(hojeLocal, 60))
+        .order("data", { ascending: false }),
       supabase
         .from("aluno")
         .select("id, token_link, acesso_bloqueado_em, arquivado_em")
@@ -79,7 +82,17 @@ export async function GET(request: Request) {
         ),
     ]);
 
-  const jaTreinou = new Set((sessoes ?? []).map((s) => s.aluno_id));
+  const jaTreinou = new Set(
+    (sessoes ?? []).filter((s) => s.data === hojeLocal).map((s) => s.aluno_id),
+  );
+
+  // a consulta ja vem da mais recente para a mais antiga
+  const ultimoTreino = new Map<string, string>();
+  for (const sessao of sessoes ?? []) {
+    if (!ultimoTreino.has(sessao.aluno_id)) {
+      ultimoTreino.set(sessao.aluno_id, sessao.data);
+    }
+  }
   const podeReceber = new Map(
     (alunos ?? [])
       .filter((a) => !a.arquivado_em && !a.acesso_bloqueado_em)
@@ -105,8 +118,6 @@ export async function GET(request: Request) {
     const token = podeReceber.get(assinatura.aluno_id);
     if (!token || jaTreinou.has(assinatura.aluno_id)) continue;
 
-    const treino = treinoDe.get(assinatura.aluno_id);
-
     try {
       await webpush.sendNotification(
         {
@@ -114,10 +125,11 @@ export async function GET(request: Request) {
           keys: { p256dh: assinatura.p256dh, auth: assinatura.auth },
         },
         JSON.stringify({
-          titulo: "Hora de treinar",
-          corpo: treino
-            ? `Hoje é treino ${treino.letra} — ${treino.titulo}.`
-            : "Hoje tem treino.",
+          ...mensagemPara(
+            treinoDe.get(assinatura.aluno_id),
+            ultimoTreino.get(assinatura.aluno_id),
+            hojeLocal,
+          ),
           url: `/aluno/${token}`,
         }),
       );
@@ -137,4 +149,56 @@ export async function GET(request: Request) {
   }
 
   return Response.json({ enviados, desativadas: mortas.length });
+}
+
+/** Quantos dias faz que o aluno sumiu passa a valer mais do que a letra de hoje. */
+const DIAS_PARA_MUDAR_O_TOM = 7;
+
+/**
+ * Para quem esta na rotina, a letra do dia — e o que faz a pessoa decidir se da
+ * tempo hoje. Para quem sumiu, a letra nao interessa: o problema dele nao e
+ * qual treino, e voltar.
+ *
+ * Em nenhum caso cobramos treino perdido. Aluno que ja se sente mal por ter
+ * faltado, recebendo cobranca, desinstala em vez de treinar.
+ */
+function mensagemPara(
+  treino: { letra: string; titulo: string } | null | undefined,
+  ultimo: string | undefined,
+  hoje: string,
+) {
+  const dias = ultimo ? diferencaEmDias(ultimo, hoje) : null;
+
+  if (dias === null) {
+    return {
+      titulo: "Seu treino está esperando",
+      corpo: "Bora começar? É só abrir e seguir a planilha.",
+    };
+  }
+
+  if (dias > DIAS_PARA_MUDAR_O_TOM) {
+    return {
+      titulo: "Faz tempo que você não aparece",
+      corpo: `Seu último treino foi há ${dias} dias. Bora voltar?`,
+    };
+  }
+
+  return {
+    titulo: "Hora de treinar",
+    corpo: treino
+      ? `Hoje é treino ${treino.letra} — ${treino.titulo}.`
+      : "Hoje tem treino.",
+  };
+}
+
+function diasAntes(data: string, dias: number) {
+  const dia = new Date(`${data}T12:00:00Z`);
+  dia.setDate(dia.getDate() - dias);
+  return dia.toISOString().slice(0, 10);
+}
+
+function diferencaEmDias(de: string, ate: string) {
+  const inicio = new Date(`${de}T12:00:00Z`).getTime();
+  const fim = new Date(`${ate}T12:00:00Z`).getTime();
+  return Math.round((fim - inicio) / 86_400_000);
 }

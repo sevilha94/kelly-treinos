@@ -319,6 +319,30 @@ export default async function Page() {
             no dia do seu treino?”. Ele toca em <B>Quero</B> e o celular pede a
             permissão. Só recebe quem aceitar.
           </p>
+          <Rotulo>O que a mensagem diz</Rotulo>
+          <Lista
+            itens={[
+              <>
+                Quem está na rotina recebe o treino do dia: “Hoje é treino C —
+                costas e abdômen”. Ele já sabe se vai dar tempo e o que levar.
+              </>,
+              <>
+                Quem passou de 7 dias sem treinar recebe outra coisa: “Seu
+                último treino foi há 9 dias. Bora voltar?”. Para quem sumiu, a
+                letra do dia não interessa — o assunto é voltar.
+              </>,
+              <>
+                Dia de descanso não gera lembrete, e quem já treinou naquele dia
+                também não recebe.
+              </>,
+            ]}
+          />
+          <Nota titulo="Por que não cobramos treino perdido">
+            O sistema nunca diz “você faltou terça”. Aluno que já se sente mal
+            por ter faltado, recebendo cobrança, desinstala em vez de treinar. A
+            falta você vê no painel e decide o que fazer — que é onde essa
+            decisão deve estar.
+          </Nota>
           <Nota titulo="Avise seus alunos de iPhone">
             No Android funciona direto. No iPhone, ele precisa antes adicionar o
             treino à tela de início — é uma exigência da Apple, não do sistema.
