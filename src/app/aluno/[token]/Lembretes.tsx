@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { salvarAssinatura, removerAssinatura } from "./actions";
 
-type Estado = "pronto" | "pedindo" | "ligado" | "negado" | "sem-suporte";
+type Estado =
+  | "pronto"
+  | "pedindo"
+  | "ligado"
+  | "desligando"
+  | "negado"
+  | "sem-suporte";
 
 /**
  * Liga o lembrete no celular do aluno.
@@ -62,6 +68,7 @@ export function Lembretes({
   }
 
   async function desligar() {
+    setEstado("desligando");
     const registro = await navigator.serviceWorker.getRegistration();
     const assinatura = await registro?.pushManager.getSubscription();
 
@@ -74,16 +81,17 @@ export function Lembretes({
 
   return (
     <div className="border-b border-borda px-5 py-4">
-      {estado === "ligado" ? (
+      {estado === "ligado" || estado === "desligando" ? (
         <div className="flex items-center justify-between gap-3">
           <span className="text-sm text-fumaca">
             Lembrete ligado neste aparelho.
           </span>
           <button
             onClick={desligar}
-            className="shrink-0 text-xs uppercase tracking-wider text-fumaca underline"
+            disabled={estado === "desligando"}
+            className="shrink-0 text-xs uppercase tracking-wider text-fumaca underline disabled:opacity-60"
           >
-            Desligar
+            {estado === "desligando" ? "Desligando..." : "Desligar"}
           </button>
         </div>
       ) : estado === "negado" ? (

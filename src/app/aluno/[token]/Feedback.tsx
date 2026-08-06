@@ -1,5 +1,6 @@
 import { enviarFeedback } from "./actions";
 import { ROTULO_PERCEPCAO, type Percepcao } from "@/lib/sessoes";
+import { BotaoAcao } from "@/componentes/BotaoAcao";
 
 /**
  * Como o treino foi para o aluno. So aparece depois de finalizar — perguntar
@@ -33,15 +34,13 @@ export function Feedback({
             <input type="hidden" name="token" value={token} />
             <input type="hidden" name="treino_id" value={treinoId} />
             <input type="hidden" name="percepcao" value={opcao} />
-            <button
-              className={`h-10 w-full rounded-lg text-xs font-semibold uppercase tracking-wider ${
-                percepcao === opcao
-                  ? "bg-sangue text-white"
-                  : "border border-borda text-fumaca"
-              }`}
+            <BotaoAcao
+              variante={percepcao === opcao ? "principal" : "secundario"}
+              carregando="..."
+              className="h-10 w-full"
             >
               {ROTULO_PERCEPCAO[opcao]}
-            </button>
+            </BotaoAcao>
           </form>
         ))}
       </div>
@@ -56,9 +55,9 @@ export function Feedback({
             placeholder="Quer contar algo para a Kelly?"
             className="min-w-0 flex-1 rounded-lg border border-borda bg-grafite px-3 py-2 text-sm text-gelo placeholder:text-fumaca/60 focus:border-sangue focus:outline-none"
           />
-          <button className="h-10 shrink-0 rounded-lg border border-borda px-3 text-xs uppercase tracking-wider text-gelo">
+          <BotaoAcao variante="secundario" carregando="..." className="h-10 shrink-0">
             Enviar
-          </button>
+          </BotaoAcao>
         </form>
       )}
     </div>

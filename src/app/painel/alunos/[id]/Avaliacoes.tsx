@@ -1,4 +1,5 @@
 import { Cartao, Vazio } from "@/componentes/Cartao";
+import { BotaoAcao } from "@/componentes/BotaoAcao";
 import { arquivarAvaliacao, salvarAvaliacao } from "../actions";
 import {
   MEDIDAS,
@@ -181,9 +182,9 @@ export function Avaliacoes({
             têm valor.
           </p>
 
-          <button className="h-10 rounded-lg bg-sangue px-4 text-xs font-semibold uppercase tracking-wider text-white hover:bg-sangue-claro">
+          <BotaoAcao carregando="Salvando..." className="h-10">
             Salvar avaliação
-          </button>
+          </BotaoAcao>
         </form>
       </details>
 
@@ -194,9 +195,14 @@ export function Avaliacoes({
         >
           <input type="hidden" name="aluno_id" value={alunoId} />
           <input type="hidden" name="avaliacao_id" value={colunas[0].id} />
-          <button className="text-xs text-fumaca hover:text-sangue-claro">
+          <BotaoAcao
+            variante="texto"
+            carregando="Apagando..."
+            confirmar="Apagar esta avaliação física?"
+            className="text-xs"
+          >
             Apagar a avaliação de {formataData(colunas[0].data)}
-          </button>
+          </BotaoAcao>
         </form>
       )}
     </Cartao>

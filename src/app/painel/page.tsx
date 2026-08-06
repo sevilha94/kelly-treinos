@@ -1,7 +1,7 @@
 import Link from "next/link";
+import { BotaoAcao } from "@/componentes/BotaoAcao";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
-import { BotaoSalvar } from "@/componentes/BotaoSalvar";
 import { salvarHoraDoLembrete } from "./alunos/actions";
 import { Cartao, Vazio } from "@/componentes/Cartao";
 import {
@@ -172,7 +172,7 @@ export default async function Page() {
               ))}
             </select>
           </label>
-          <BotaoSalvar variante="secundario">Salvar horário</BotaoSalvar>
+          <BotaoAcao variante="secundario" carregando="Salvando...">Salvar horário</BotaoAcao>
           <p className="text-xs text-fumaca">
             O aluno só recebe se tiver ligado o lembrete no link dele. No
             iPhone, ele precisa antes adicionar o treino à tela de início.

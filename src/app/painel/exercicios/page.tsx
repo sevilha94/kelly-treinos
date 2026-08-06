@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BotaoAcao } from "@/componentes/BotaoAcao";
 import { createClient } from "@/lib/supabase/server";
 import { Cartao, Vazio } from "@/componentes/Cartao";
 import { lerMidia } from "@/lib/midia";
@@ -47,9 +48,9 @@ export default async function Page(props: PageProps<"/painel/exercicios">) {
               cada um e cola o link do vídeo, no seu ritmo.
             </p>
             <form action={preencherBiblioteca}>
-              <button className="h-11 rounded-lg bg-sangue px-5 text-sm font-semibold uppercase tracking-wider text-white hover:bg-sangue-claro">
+              <BotaoAcao carregando="Cadastrando..." className="h-11 px-5 text-sm">
                 Preencher com exercícios comuns
-              </button>
+              </BotaoAcao>
             </form>
             <p className="text-xs text-fumaca">
               Não apaga nem altera nada do que você já cadastrou.
@@ -71,9 +72,9 @@ export default async function Page(props: PageProps<"/painel/exercicios">) {
                   vídeo — o vídeo é você quem escolhe depois.
                 </p>
                 <form action={preencherBiblioteca}>
-                  <button className="h-10 rounded-lg bg-sangue px-4 text-xs font-semibold uppercase tracking-wider text-white hover:bg-sangue-claro">
+                  <BotaoAcao carregando="Adicionando..." className="h-10">
                     Adicionar os que faltam
-                  </button>
+                  </BotaoAcao>
                 </form>
                 <p className="text-xs text-fumaca">
                   Não apaga nem altera nada do que você já cadastrou. Pode clicar

@@ -5,9 +5,9 @@ import {
   salvarItem,
   salvarTreino,
 } from "../actions";
+import { BotaoAcao } from "@/componentes/BotaoAcao";
 import { Cartao, Vazio } from "@/componentes/Cartao";
 import { AdicionarExercicio } from "./AdicionarExercicio";
-import { BotaoSalvar } from "@/componentes/BotaoSalvar";
 import { nomeExibido, type Exercicio, type Treino } from "@/lib/tipos";
 
 const ENTRADA =
@@ -47,13 +47,15 @@ export function EditorDeTreino({
             className={ENTRADA}
           />
         </label>
-        <BotaoSalvar variante="secundario" />
-        <button
+        <BotaoAcao variante="secundario" carregando="Salvando...">Salvar</BotaoAcao>
+        <BotaoAcao
           formAction={arquivarTreino}
-          className="h-9 rounded-lg px-3 text-xs uppercase tracking-wider text-fumaca hover:text-sangue-claro"
+          variante="perigo"
+          carregando="Excluindo..."
+          confirmar={`Excluir o treino ${treino.letra}? Os exercícios dele saem da planilha do aluno.`}
         >
           Excluir treino
-        </button>
+        </BotaoAcao>
       </form>
 
       {treino.itens.length === 0 ? (
@@ -151,33 +153,37 @@ export function EditorDeTreino({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
-                    <BotaoSalvar />
+                    <BotaoAcao carregando="Salvando...">Salvar</BotaoAcao>
                     {indice > 0 && (
-                      <button
+                      <BotaoAcao
                         formAction={moverItem}
                         name="direcao"
                         value="cima"
-                        className="h-9 rounded-lg border border-borda px-3 text-xs text-fumaca hover:text-gelo"
+                        variante="secundario"
+                        carregando="..."
                       >
                         ↑ subir
-                      </button>
+                      </BotaoAcao>
                     )}
                     {indice < treino.itens.length - 1 && (
-                      <button
+                      <BotaoAcao
                         formAction={moverItem}
                         name="direcao"
                         value="baixo"
-                        className="h-9 rounded-lg border border-borda px-3 text-xs text-fumaca hover:text-gelo"
+                        variante="secundario"
+                        carregando="..."
                       >
                         ↓ descer
-                      </button>
+                      </BotaoAcao>
                     )}
-                    <button
+                    <BotaoAcao
                       formAction={removerItem}
-                      className="ml-auto h-9 px-2 text-xs text-fumaca hover:text-sangue-claro"
+                      variante="perigo"
+                      carregando="Tirando..."
+                      className="ml-auto"
                     >
                       Tirar do treino
-                    </button>
+                    </BotaoAcao>
                   </div>
                 </form>
               </details>

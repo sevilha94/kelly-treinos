@@ -5,8 +5,13 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { registrarAcesso, COOKIE_DISPOSITIVO } from "@/lib/acessos";
-import { carregarSessoes, formataCarga, type MarcaDeCarga } from "@/lib/sessoes";
-import { BotaoFinalizar } from "./BotaoFinalizar";
+import {
+  consultaDeSessoes,
+  montarSessoes,
+  formataCarga,
+  type MarcaDeCarga,
+} from "@/lib/sessoes";
+import { BotaoAcao } from "@/componentes/BotaoAcao";
 import { CronometroDescanso } from "./CronometroDescanso";
 import { Feedback } from "./Feedback";
 import { Lembretes } from "./Lembretes";
@@ -96,52 +101,58 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
 
   // tudo o que depende so do aluno vai junto: cada etapa a mais e uma ida e
   // volta ate o banco que o aluno espera de pe na academia
-  const [mensalidadeRes, treinosRes, agendaRes, avaliacoesRes, lembretesRes] =
-    await Promise.all([
-      supabase
-        .from("mensalidade")
-        .select("*")
-        .eq("aluno_id", aluno.id)
-        .is("pago_em", null)
-        .is("arquivado_em", null)
-        .order("vencimento")
-        .limit(1)
-        .maybeSingle(),
-      supabase
-        .from("treino")
-        .select(
-          `id, letra, titulo, ordem,
+  const [
+    mensalidadeRes,
+    treinosRes,
+    agendaRes,
+    avaliacoesRes,
+    lembretesRes,
+    sessoesRes,
+  ] = await Promise.all([
+    supabase
+      .from("mensalidade")
+      .select("*")
+      .eq("aluno_id", aluno.id)
+      .is("pago_em", null)
+      .is("arquivado_em", null)
+      .order("vencimento")
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("treino")
+      .select(
+        `id, letra, titulo, ordem,
          itens:treino_exercicio(
            id, apelido, series, repeticoes, observacao, descanso_segundos, ordem,
            exercicio:exercicio_id(id, nome, grupo_muscular, midia_url, dica)
          )`,
-        )
-        .eq("aluno_id", aluno.id)
-        .is("arquivado_em", null)
-        .is("itens.arquivado_em", null)
-        .order("ordem")
-        .order("ordem", { referencedTable: "treino_exercicio" }),
-      supabase
-        .from("aluno_agenda")
-        .select("dia_semana, treino_id")
-        .eq("aluno_id", aluno.id),
-      supabase
-        .from("avaliacao")
-        .select("*")
-        .eq("aluno_id", aluno.id)
-        .is("arquivado_em", null)
-        .order("data", { ascending: false })
-        .limit(2),
-      supabase
-        .from("aluno_lembrete")
-        .select("id", { count: "exact", head: true })
-        .eq("aluno_id", aluno.id)
-        .is("desativado_em", null),
-    ]);
+      )
+      .eq("aluno_id", aluno.id)
+      .is("arquivado_em", null)
+      .is("itens.arquivado_em", null)
+      .order("ordem")
+      .order("ordem", { referencedTable: "treino_exercicio" }),
+    supabase
+      .from("aluno_agenda")
+      .select("dia_semana, treino_id")
+      .eq("aluno_id", aluno.id),
+    supabase
+      .from("avaliacao")
+      .select("*")
+      .eq("aluno_id", aluno.id)
+      .is("arquivado_em", null)
+      .order("data", { ascending: false })
+      .limit(2),
+    supabase
+      .from("aluno_lembrete")
+      .select("id", { count: "exact", head: true })
+      .eq("aluno_id", aluno.id)
+      .is("desativado_em", null),
+    consultaDeSessoes(supabase, aluno.id),
+  ]);
 
   const emAberto = (mensalidadeRes.data ?? undefined) as
-    | Mensalidade
-    | undefined;
+    Mensalidade | undefined;
 
   // so bloqueia se a Kelly ligou isso neste aluno e a tolerancia ja passou
   if (deveBloquearPorAtraso(aluno, emAberto)) {
@@ -187,7 +198,7 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
     treinos[0];
 
   const { finalizadaEm, percepcao, comentario, marcacoes, historico } =
-    await carregarSessoes(supabase, aluno.id, treino.id, dataDeHoje());
+    await montarSessoes(supabase, sessoesRes.data, treino.id, dataDeHoje());
 
   const avaliacoes = (avaliacoesRes.data ?? []) as Avaliacao[];
   const feitos = treino.itens.filter((item) => marcacoes.get(item.id)?.feito);
@@ -287,7 +298,10 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
 
                   <Evolucao marcas={marcas} />
 
-                  <form action={marcarExercicio} className="flex items-end gap-2">
+                  <form
+                    action={marcarExercicio}
+                    className="flex items-end gap-2"
+                  >
                     <input type="hidden" name="token" value={token} />
                     <input type="hidden" name="treino_id" value={treino.id} />
                     <input type="hidden" name="item_id" value={item.id} />
@@ -303,17 +317,15 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
                         className="w-full rounded-lg border border-borda bg-grafite px-3 py-2.5 text-base text-gelo focus:border-sangue focus:outline-none"
                       />
                     </label>
-                    <button
+                    <BotaoAcao
                       name="feito"
                       value={feito ? "nao" : "sim"}
-                      className={`h-11 flex-1 rounded-lg text-sm font-semibold uppercase tracking-wider ${
-                        feito
-                          ? "border border-borda text-fumaca"
-                          : "bg-sangue text-white"
-                      }`}
+                      variante={feito ? "secundario" : "principal"}
+                      carregando={feito ? "Tirando..." : "Marcando..."}
+                      className="h-11 flex-1 text-sm"
                     >
                       {feito ? "Desmarcar" : "Fiz este"}
-                    </button>
+                    </BotaoAcao>
                   </form>
                 </div>
               </details>
@@ -350,16 +362,25 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
               <input type="hidden" name="token" value={token} />
               <input type="hidden" name="treino_id" value={treino.id} />
               <input type="hidden" name="desfazer" value="sim" />
-              <button className="text-xs uppercase tracking-wider text-fumaca underline">
+              <BotaoAcao
+                variante="texto"
+                carregando="Desfazendo..."
+                className="text-xs uppercase tracking-wider underline"
+              >
                 Desfazer
-              </button>
+              </BotaoAcao>
             </form>
           </div>
         ) : (
           <form action={finalizarTreino}>
             <input type="hidden" name="token" value={token} />
             <input type="hidden" name="treino_id" value={treino.id} />
-            <BotaoFinalizar />
+            <BotaoAcao
+              carregando="Finalizando..."
+              className="h-12 w-full rounded-xl text-sm font-bold tracking-widest"
+            >
+              Finalizar treino de hoje
+            </BotaoAcao>
           </form>
         )}
       </div>
@@ -408,9 +429,7 @@ function MinhasMedidas({ avaliacoes }: { avaliacoes: Avaliacao[] }) {
         <span className="text-sm uppercase tracking-wider text-fumaca">
           Minhas medidas
         </span>
-        <span className="text-xs text-fumaca">
-          {formataData(atual.data)} ▸
-        </span>
+        <span className="text-xs text-fumaca">{formataData(atual.data)} ▸</span>
       </summary>
 
       <ul className="space-y-1.5 px-5 pb-5">
@@ -423,7 +442,10 @@ function MinhasMedidas({ avaliacoes }: { avaliacoes: Avaliacao[] }) {
               : Math.round((Number(valor) - Number(antes)) * 10) / 10;
 
           return (
-            <li key={campo} className="flex items-baseline justify-between gap-3">
+            <li
+              key={campo}
+              className="flex items-baseline justify-between gap-3"
+            >
               <span className="text-sm text-fumaca">{rotulo}</span>
               <span className="text-sm tabular-nums">
                 {formataCarga(Number(valor))}
@@ -444,7 +466,9 @@ function MinhasMedidas({ avaliacoes }: { avaliacoes: Avaliacao[] }) {
         {imcAtual !== null && (
           <li className="flex items-baseline justify-between gap-3">
             <span className="text-sm text-fumaca">IMC</span>
-            <span className="text-sm tabular-nums">{formataCarga(imcAtual)}</span>
+            <span className="text-sm tabular-nums">
+              {formataCarga(imcAtual)}
+            </span>
           </li>
         )}
       </ul>
@@ -536,7 +560,6 @@ function diaDaSemanaAtual() {
 function dataDeHoje() {
   return new Date().toISOString().slice(0, 10);
 }
-
 
 function horaDe(iso: string) {
   return new Date(iso).toLocaleTimeString("pt-BR", {

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BotaoAcao } from "@/componentes/BotaoAcao";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -16,7 +17,6 @@ import {
 } from "../actions";
 import { Avaliacoes } from "./Avaliacoes";
 import { Cobranca } from "./Cobranca";
-import { BotaoSalvar } from "@/componentes/BotaoSalvar";
 import type { Mensalidade } from "@/lib/mensalidades";
 import {
   DIAS_SEMANA,
@@ -164,7 +164,7 @@ export default async function Page(props: PageProps<"/painel/alunos/[id]">) {
               </label>
             ))}
           </div>
-          <BotaoSalvar variante="secundario">Salvar semana</BotaoSalvar>
+          <BotaoAcao variante="secundario" carregando="Salvando...">Salvar semana</BotaoAcao>
         </form>
       </Cartao>
 
@@ -199,9 +199,13 @@ export default async function Page(props: PageProps<"/painel/alunos/[id]">) {
 
       <form action={criarTreino}>
         <input type="hidden" name="aluno_id" value={aluno.id} />
-        <button className="h-11 w-full rounded-lg border border-dashed border-borda text-sm uppercase tracking-wider text-fumaca hover:border-fumaca hover:text-gelo">
+        <BotaoAcao
+          variante="secundario"
+          carregando="Criando..."
+          className="h-11 w-full border-dashed text-sm"
+        >
           + Adicionar outro treino
-        </button>
+        </BotaoAcao>
       </form>
 
       <details className="rounded-2xl border border-borda bg-carvao">
@@ -212,9 +216,13 @@ export default async function Page(props: PageProps<"/painel/alunos/[id]">) {
           <FormularioAluno aluno={aluno} />
           <form action={arquivarAluno} className="border-t border-borda pt-4">
             <input type="hidden" name="id" value={aluno.id} />
-            <button className="text-sm text-fumaca hover:text-sangue-claro">
+            <BotaoAcao
+              variante="texto"
+              carregando="Arquivando..."
+              confirmar="Arquivar este aluno? Ele sai da sua lista e o link dele para de funcionar."
+            >
               Arquivar aluno
-            </button>
+            </BotaoAcao>
           </form>
         </div>
       </details>
@@ -274,9 +282,9 @@ function CopiarDeOutroAluno({
           que for diferente depois. Os treinos que já têm exercício aqui não são
           tocados — a cópia entra depois deles. A agenda da semana não vem junto.
         </p>
-        <button className="h-10 rounded-lg bg-sangue px-4 text-xs font-semibold uppercase tracking-wider text-white hover:bg-sangue-claro">
+        <BotaoAcao carregando="Copiando..." className="h-10">
           Copiar
-        </button>
+        </BotaoAcao>
       </form>
     </details>
   );
@@ -350,9 +358,9 @@ function ControleDeAcesso({ aluno }: { aluno: Aluno }) {
             name="bloquear"
             value={bloqueado ? "nao" : "sim"}
           />
-          <button className="h-9 rounded-lg border border-borda px-3 text-xs uppercase tracking-wider text-gelo hover:border-fumaca">
+          <BotaoAcao variante="secundario" carregando="...">
             {bloqueado ? "Liberar de novo" : "Pausar acesso"}
-          </button>
+          </BotaoAcao>
         </form>
       </div>
 
@@ -364,9 +372,14 @@ function ControleDeAcesso({ aluno }: { aluno: Aluno }) {
 
       <form action={gerarNovoLink}>
         <input type="hidden" name="id" value={aluno.id} />
-        <button className="text-xs uppercase tracking-wider text-fumaca hover:text-sangue-claro">
+        <BotaoAcao
+          variante="texto"
+          carregando="Gerando..."
+          confirmar="Gerar um link novo? O link que o aluno tem hoje para de funcionar na hora, e você vai precisar enviar o novo para ele."
+          className="text-xs uppercase tracking-wider"
+        >
           Gerar novo link (o atual para de funcionar)
-        </button>
+        </BotaoAcao>
       </form>
     </div>
   );

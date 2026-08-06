@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BotaoAcao } from "@/componentes/BotaoAcao";
 import { Marca } from "@/componentes/Marca";
 import { sair } from "@/app/entrar/actions";
 
@@ -11,9 +12,13 @@ export default function Layout({ children }: LayoutProps<"/painel">) {
             <Marca compacta />
           </Link>
           <form action={sair}>
-            <button className="text-xs uppercase tracking-widest text-fumaca hover:text-gelo">
+            <BotaoAcao
+              variante="texto"
+              carregando="Saindo..."
+              className="text-xs uppercase tracking-widest"
+            >
               Sair
-            </button>
+            </BotaoAcao>
           </form>
         </div>
         <nav className="mx-auto flex max-w-5xl gap-1 px-3 pb-2 text-sm">

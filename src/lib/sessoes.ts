@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-
 export type Marcacao = { feito: boolean; carga_kg: number | null };
 
 export type MarcaDeCarga = { data: string; carga: number };
@@ -10,7 +9,7 @@ export function formataCarga(carga: number): string {
   const arredondado = Math.round(carga * 10) / 10;
   return Number.isInteger(arredondado)
     ? String(arredondado)
-    : arredondado.toFixed(1).replace('.', ',');
+    : arredondado.toFixed(1).replace(".", ",");
 }
 
 export type Percepcao = "facil" | "na_medida" | "puxado";
@@ -36,31 +35,44 @@ const JANELA_DIAS = 120;
 const MAX_SESSOES = 200;
 
 /**
- * Traz de uma vez tudo o que a tela do aluno precisa saber sobre treinos
- * passados e sobre o de hoje.
- *
- * Antes isso eram quatro consultas em duas etapas — o historico e as marcacoes
- * de hoje saem das mesmas tabelas, entao buscar separado era ida e volta a toa.
- * Como o servidor fala com o banco pela rede, cada etapa a menos aparece no
- * tempo que o aluno espera a pagina abrir.
+ * A consulta das sessoes so depende do aluno, entao ela sai junto com as
+ * outras do primeiro lote. Deixar isso dentro de `montarSessoes` custava uma
+ * ida e volta a mais ao banco, em serie, com o aluno esperando de pe na
+ * academia.
  */
-export async function carregarSessoes(
-  supabase: SupabaseClient,
-  alunoId: string,
-  treinoId: string,
-  hoje: string,
-): Promise<Sessoes> {
+export function consultaDeSessoes(supabase: SupabaseClient, alunoId: string) {
   const desde = new Date();
   desde.setDate(desde.getDate() - JANELA_DIAS);
 
-  const { data: sessoes } = await supabase
+  return supabase
     .from("sessao")
     .select("id, data, treino_id, finalizada_em, percepcao, comentario")
     .eq("aluno_id", alunoId)
     .gte("data", desde.toISOString().slice(0, 10))
     .order("data", { ascending: false })
     .limit(MAX_SESSOES);
+}
 
+type LinhaDeSessao = {
+  id: string;
+  data: string;
+  treino_id: string;
+  finalizada_em: string | null;
+  percepcao: Percepcao | null;
+  comentario: string | null;
+};
+
+/**
+ * Junta o que a tela do aluno precisa saber sobre treinos passados e sobre o de
+ * hoje. O historico de carga e as marcacoes de hoje saem das mesmas tabelas,
+ * entao uma consulta so alimenta as duas coisas.
+ */
+export async function montarSessoes(
+  supabase: SupabaseClient,
+  sessoes: LinhaDeSessao[] | null,
+  treinoId: string,
+  hoje: string,
+): Promise<Sessoes> {
   const vazio: Sessoes = {
     finalizadaEm: null,
     percepcao: null,

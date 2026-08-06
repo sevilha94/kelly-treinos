@@ -1,4 +1,5 @@
 import { Cartao, Vazio } from "@/componentes/Cartao";
+import { BotaoAcao } from "@/componentes/BotaoAcao";
 import { alternarPagamento, gerarMensalidade, salvarCobranca } from "../actions";
 import { TOM_CLASSE } from "@/lib/frequencia";
 import {
@@ -69,15 +70,12 @@ export function Cobranca({
                     value={mensalidade.id}
                   />
                   <input type="hidden" name="pagar" value={paga ? "nao" : "sim"} />
-                  <button
-                    className={`h-9 rounded-lg px-3 text-xs font-semibold uppercase tracking-wider ${
-                      paga
-                        ? "border border-borda text-fumaca hover:text-gelo"
-                        : "bg-sangue text-white hover:bg-sangue-claro"
-                    }`}
+                  <BotaoAcao
+                    variante={paga ? "secundario" : "principal"}
+                    carregando="..."
                   >
                     {paga ? "Desfazer" : "Marcar paga"}
-                  </button>
+                  </BotaoAcao>
                 </form>
               </li>
             );
@@ -88,9 +86,9 @@ export function Cobranca({
       {aluno.valor_mensalidade && !jaTemDoMes && (
         <form action={gerarMensalidade} className="border-t border-borda px-4 py-3">
           <input type="hidden" name="aluno_id" value={aluno.id} />
-          <button className="h-10 rounded-lg border border-borda px-4 text-xs font-semibold uppercase tracking-wider text-gelo hover:border-fumaca">
+          <BotaoAcao variante="secundario" carregando="Lançando..." className="h-10">
             Lançar a mensalidade de {nomeDaCompetencia(competenciaAtual())}
-          </button>
+          </BotaoAcao>
         </form>
       )}
 
@@ -157,9 +155,9 @@ export function Cobranca({
             />
           </label>
 
-          <button className="h-10 rounded-lg bg-sangue px-4 text-xs font-semibold uppercase tracking-wider text-white hover:bg-sangue-claro">
+          <BotaoAcao carregando="Salvando..." className="h-10">
             Salvar
-          </button>
+          </BotaoAcao>
         </form>
       </details>
     </Cartao>

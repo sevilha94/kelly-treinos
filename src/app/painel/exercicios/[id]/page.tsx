@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BotaoAcao } from "@/componentes/BotaoAcao";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { FormularioExercicio } from "../FormularioExercicio";
@@ -31,9 +32,13 @@ export default async function Page(
 
       <form action={arquivarExercicio} className="border-t border-borda pt-5">
         <input type="hidden" name="id" value={id} />
-        <button className="text-sm text-fumaca hover:text-sangue-claro">
+        <BotaoAcao
+          variante="texto"
+          carregando="Removendo..."
+          confirmar="Remover este exercício da biblioteca?"
+        >
           Remover da biblioteca
-        </button>
+        </BotaoAcao>
         <p className="mt-1 text-xs text-fumaca">
           As planilhas que já usam este exercício continuam funcionando.
         </p>

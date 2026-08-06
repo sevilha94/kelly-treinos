@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { adicionarItem } from "../actions";
 import type { Exercicio } from "@/lib/tipos";
-import { BotaoSalvar } from "@/componentes/BotaoSalvar";
+import { BotaoAcao } from "@/componentes/BotaoAcao";
 
 const ENTRADA =
   "w-full rounded-lg border border-borda bg-grafite px-3 py-2 text-sm text-gelo placeholder:text-fumaca/60 focus:border-sangue focus:outline-none";
@@ -99,7 +99,7 @@ export function AdicionarExercicio({
         <input name="repeticoes" defaultValue="12" className={ENTRADA} />
       </label>
 
-      <BotaoSalvar salvando="Adicionando...">Adicionar</BotaoSalvar>
+      <BotaoAcao carregando="Adicionando...">Adicionar</BotaoAcao>
     </form>
   );
 }
