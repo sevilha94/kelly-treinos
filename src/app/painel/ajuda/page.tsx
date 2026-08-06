@@ -190,8 +190,16 @@ export default async function Page() {
           <Nota titulo="Não existe “salvar tudo”">
             Cada botão salva na hora que você clica — o de <B>Adicionar</B>, o{" "}
             <B>Salvar</B> de cada treino, o de dentro de cada exercício. Enquanto
-            salva, o botão mostra “Salvando...”. Pode fechar a página quando
-            quiser que nada se perde.
+            salva, o botão mostra “Salvando...” e fica travado, para não salvar
+            duas vezes sem querer. Pode fechar a página quando quiser que nada se
+            perde.
+          </Nota>
+          <Nota titulo="O que não tem volta, pergunta antes">
+            Cinco ações abrem uma pergunta de confirmação: gerar novo link,
+            excluir treino, tirar exercício da biblioteca, apagar avaliação e
+            arquivar aluno. O resto salva direto — se perguntasse em tudo, você
+            aprenderia a clicar em “ok” sem ler, e aí a pergunta não protegeria
+            mais nada.
           </Nota>
           <Rotulo>Nome só nesta planilha</Rotulo>
           <p>

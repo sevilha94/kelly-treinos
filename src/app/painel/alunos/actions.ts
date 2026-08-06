@@ -30,6 +30,28 @@ function numero(formData: FormData, campo: string) {
   return Number.isFinite(convertido) ? convertido : null;
 }
 
+/**
+ * O banco so aceita descanso entre 0 e 900 segundos. Sem este limite, digitar
+ * 1200 fazia a gravacao inteira ser recusada em silencio: a tela voltava igual
+ * e a Kelly achava que tinha salvado.
+ */
+function segundosDeDescanso(formData: FormData) {
+  const valor = numero(formData, "descanso_segundos");
+  if (valor === null) return null;
+  return Math.min(900, Math.max(0, Math.round(valor)));
+}
+
+/**
+ * Falha de gravacao vira registro no servidor.
+ *
+ * Ainda nao mostramos o erro na tela — para isso cada formulario precisaria
+ * carregar um estado proprio. Mas gravar aqui e a diferenca entre investigar
+ * um "nao salvou" com informacao e no escuro.
+ */
+function conferir(onde: string, erro: { message: string } | null) {
+  if (erro) console.error(`[kelly-treinos] falhou em ${onde}: ${erro.message}`);
+}
+
 // ---------------------------------------------------------------------------
 // ALUNO
 // ---------------------------------------------------------------------------
@@ -202,14 +224,15 @@ export async function adicionarItem(formData: FormData) {
     .eq("treino_id", treinoId)
     .is("arquivado_em", null);
 
-  await supabase.from("treino_exercicio").insert({
+  const { error } = await supabase.from("treino_exercicio").insert({
     treino_id: treinoId,
     exercicio_id: exercicioId,
     series: texto(formData, "series") ?? "4",
     repeticoes: texto(formData, "repeticoes") ?? "12",
-    descanso_segundos: numero(formData, "descanso_segundos"),
+    descanso_segundos: segundosDeDescanso(formData),
     ordem: count ?? 0,
   });
+  conferir("adicionarItem", error);
 
   revalidatePath(`/painel/alunos/${alunoId}`);
 }
@@ -218,7 +241,7 @@ export async function salvarItem(formData: FormData) {
   const supabase = await exigirLogin();
   const alunoId = String(formData.get("aluno_id") ?? "");
 
-  await supabase
+  const { error } = await supabase
     .from("treino_exercicio")
     .update({
       // vazio volta a valer o nome da biblioteca
@@ -226,9 +249,10 @@ export async function salvarItem(formData: FormData) {
       series: texto(formData, "series") ?? "4",
       repeticoes: texto(formData, "repeticoes") ?? "12",
       observacao: texto(formData, "observacao"),
-      descanso_segundos: numero(formData, "descanso_segundos"),
+      descanso_segundos: segundosDeDescanso(formData),
     })
     .eq("id", String(formData.get("item_id") ?? ""));
+  conferir("salvarItem", error);
 
   revalidatePath(`/painel/alunos/${alunoId}`);
 }
