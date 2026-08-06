@@ -1,4 +1,5 @@
 import { lerMidia } from "@/lib/midia";
+import { PlayerYoutube } from "./PlayerYoutube";
 
 /**
  * Mostra a demonstracao do exercicio, seja ela GIF, imagem, video solto ou
@@ -28,30 +29,11 @@ export function MidiaExercicio({
 
   if (midia.tipo === "youtube") {
     return (
-      <details className="group">
-        <summary className="relative flex aspect-video w-full cursor-pointer list-none items-center justify-center overflow-hidden rounded-xl border border-borda bg-black group-open:hidden">
-          {/* a capa vem do proprio YouTube: uma imagem no lugar de um player */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={midia.capaUrl}
-            alt=""
-            loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover opacity-70"
-          />
-          <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-sangue text-xl text-white">
-            ▶
-          </span>
-          <span className="sr-only">Ver como executar {titulo}</span>
-        </summary>
-
-        <iframe
-          src={`${midia.embedUrl}&autoplay=1`}
-          title={`Demonstração: ${titulo}`}
-          allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          className="aspect-video w-full rounded-xl border border-borda bg-black"
-        />
-      </details>
+      <PlayerYoutube
+        embedUrl={midia.embedUrl}
+        capaUrl={midia.capaUrl}
+        titulo={titulo}
+      />
     );
   }
 
