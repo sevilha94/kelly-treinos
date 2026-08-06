@@ -414,6 +414,21 @@ export async function alternarPagamento(formData: FormData) {
   revalidatePath("/painel");
 }
 
+/** Horario em que os lembretes saem, igual para todos os alunos. */
+export async function salvarHoraDoLembrete(formData: FormData) {
+  const supabase = await exigirLogin();
+  const hora = Math.min(23, Math.max(0, Math.round(numero(formData, "hora") ?? 7)));
+
+  await supabase
+    .from("configuracao")
+    .upsert(
+      { chave: "hora_lembrete", valor: String(hora), atualizado_em: new Date().toISOString() },
+      { onConflict: "chave" },
+    );
+
+  revalidatePath("/painel");
+}
+
 // ---------------------------------------------------------------------------
 // AGENDA DA SEMANA
 // ---------------------------------------------------------------------------

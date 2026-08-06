@@ -9,6 +9,7 @@ import { carregarSessoes, formataCarga, type MarcaDeCarga } from "@/lib/sessoes"
 import { BotaoFinalizar } from "./BotaoFinalizar";
 import { CronometroDescanso } from "./CronometroDescanso";
 import { Feedback } from "./Feedback";
+import { Lembretes } from "./Lembretes";
 import { MidiaExercicio } from "@/componentes/MidiaExercicio";
 import { Marca } from "@/componentes/Marca";
 import { marcarExercicio, finalizarTreino } from "./actions";
@@ -95,7 +96,7 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
 
   // tudo o que depende so do aluno vai junto: cada etapa a mais e uma ida e
   // volta ate o banco que o aluno espera de pe na academia
-  const [mensalidadeRes, treinosRes, agendaRes, avaliacoesRes] =
+  const [mensalidadeRes, treinosRes, agendaRes, avaliacoesRes, lembretesRes] =
     await Promise.all([
       supabase
         .from("mensalidade")
@@ -131,6 +132,11 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
         .is("arquivado_em", null)
         .order("data", { ascending: false })
         .limit(2),
+      supabase
+        .from("aluno_lembrete")
+        .select("id", { count: "exact", head: true })
+        .eq("aluno_id", aluno.id)
+        .is("desativado_em", null),
     ]);
 
   const emAberto = (mensalidadeRes.data ?? undefined) as
@@ -317,6 +323,8 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
       </ul>
 
       <AvisoDeMensalidade emAberto={emAberto} />
+
+      <Lembretes token={token} jaLigado={(lembretesRes.count ?? 0) > 0} />
 
       <MinhasMedidas avaliacoes={avaliacoes} />
 

@@ -94,6 +94,47 @@ export async function marcarExercicio(formData: FormData) {
   revalidatePath(`/aluno/${token}`);
 }
 
+/**
+ * Guarda a assinatura de push daquele aparelho.
+ *
+ * O endpoint e unico por aparelho, entao reassinar no mesmo celular atualiza a
+ * linha em vez de criar outra — e reativa se ela tinha sido desativada.
+ */
+export async function salvarAssinatura(dados: {
+  token: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+}) {
+  const contexto = await alunoDoToken(dados.token);
+  if (!contexto) return;
+
+  await contexto.supabase.from("aluno_lembrete").upsert(
+    {
+      aluno_id: contexto.alunoId,
+      endpoint: dados.endpoint,
+      p256dh: dados.p256dh,
+      auth: dados.auth,
+      desativado_em: null,
+    },
+    { onConflict: "endpoint" },
+  );
+}
+
+export async function removerAssinatura(dados: {
+  token: string;
+  endpoint: string;
+}) {
+  const contexto = await alunoDoToken(dados.token);
+  if (!contexto) return;
+
+  await contexto.supabase
+    .from("aluno_lembrete")
+    .delete()
+    .eq("aluno_id", contexto.alunoId)
+    .eq("endpoint", dados.endpoint);
+}
+
 const PERCEPCOES = ["facil", "na_medida", "puxado"] as const;
 
 /** Como o treino de hoje foi para o aluno. E o que a Kelly nao tinha como saber. */

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
+import { BotaoSalvar } from "@/componentes/BotaoSalvar";
+import { salvarHoraDoLembrete } from "./alunos/actions";
 import { Cartao, Vazio } from "@/componentes/Cartao";
 import {
   frequenciaPorAluno,
@@ -17,19 +19,27 @@ import {
 export default async function Page() {
   const supabase = await createClient();
 
-  const [alunosRes, exerciciosRes, frequencias, emAberto] = await Promise.all([
-    supabase
-      .from("aluno")
-      .select("id, nome")
-      .is("arquivado_em", null)
-      .order("nome"),
-    supabase
-      .from("exercicio")
-      .select("id", { count: "exact", head: true })
-      .is("arquivado_em", null),
-    frequenciaPorAluno(supabase),
-    emAbertoPorAluno(supabase),
-  ]);
+  const [alunosRes, exerciciosRes, frequencias, emAberto, configRes] =
+    await Promise.all([
+      supabase
+        .from("aluno")
+        .select("id, nome")
+        .is("arquivado_em", null)
+        .order("nome"),
+      supabase
+        .from("exercicio")
+        .select("id", { count: "exact", head: true })
+        .is("arquivado_em", null),
+      frequenciaPorAluno(supabase),
+      emAbertoPorAluno(supabase),
+      supabase
+        .from("configuracao")
+        .select("valor")
+        .eq("chave", "hora_lembrete")
+        .maybeSingle(),
+    ]);
+
+  const horaLembrete = Number(configRes.data?.valor ?? 7);
 
   const alunos = alunosRes.data ?? [];
 
@@ -50,7 +60,10 @@ export default async function Page() {
 
   // mensalidade vencida, da mais atrasada para a menos
   const devendo = alunos
-    .map((aluno) => ({ aluno, situacao: situacaoMensalidade(emAberto.get(aluno.id)) }))
+    .map((aluno) => ({
+      aluno,
+      situacao: situacaoMensalidade(emAberto.get(aluno.id)),
+    }))
     .filter((linha) => (linha.situacao?.diasDeAtraso ?? 0) > 0)
     .sort((a, b) => b.situacao!.diasDeAtraso - a.situacao!.diasDeAtraso);
 
@@ -113,9 +126,12 @@ export default async function Page() {
                   className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-grafite"
                 >
                   <span className="min-w-0">
-                    <span className="block truncate text-base">{aluno.nome}</span>
+                    <span className="block truncate text-base">
+                      {aluno.nome}
+                    </span>
                     <span className="text-xs text-fumaca">
-                      {nomeDaCompetencia(emAberto.get(aluno.id)!.competencia)} · R${" "}
+                      {nomeDaCompetencia(emAberto.get(aluno.id)!.competencia)} ·
+                      R${" "}
                       {Number(emAberto.get(aluno.id)!.valor)
                         .toFixed(2)
                         .replace(".", ",")}
@@ -130,6 +146,39 @@ export default async function Page() {
           </ul>
         </Cartao>
       )}
+
+      <details className="rounded-2xl border border-borda bg-carvao">
+        <summary className="cursor-pointer px-4 py-3 text-sm uppercase tracking-wider text-fumaca hover:text-gelo">
+          Lembrete no celular dos alunos
+        </summary>
+        <form action={salvarHoraDoLembrete} className="space-y-3 px-4 pb-4">
+          <p className="text-sm leading-relaxed text-fumaca">
+            Todo dia, nesse horário, quem tem treino marcado na agenda recebe um
+            aviso no celular. Quem já treinou naquele dia não é incomodado.
+          </p>
+          <label className="block w-32">
+            <span className="mb-1 block text-[10px] uppercase tracking-widest text-fumaca">
+              Horário
+            </span>
+            <select
+              name="hora"
+              defaultValue={horaLembrete}
+              className="w-full rounded-lg border border-borda bg-grafite px-3 py-2 text-sm text-gelo focus:border-sangue focus:outline-none"
+            >
+              {Array.from({ length: 24 }, (_, hora) => (
+                <option key={hora} value={hora}>
+                  {String(hora).padStart(2, "0")}:00
+                </option>
+              ))}
+            </select>
+          </label>
+          <BotaoSalvar variante="secundario">Salvar horário</BotaoSalvar>
+          <p className="text-xs text-fumaca">
+            O aluno só recebe se tiver ligado o lembrete no link dele. No
+            iPhone, ele precisa antes adicionar o treino à tela de início.
+          </p>
+        </form>
+      </details>
 
       <p className="text-sm leading-relaxed text-fumaca">
         Só entram nesta conta os treinos que o aluno finalizou pelo link. Quem

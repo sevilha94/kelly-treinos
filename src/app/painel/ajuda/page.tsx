@@ -307,6 +307,28 @@ export default async function Page() {
           </p>
         </Ficha>
 
+        <Ficha id="lembretes" titulo="Lembrete no celular do aluno">
+          <p>
+            No painel, em <B>Lembrete no celular dos alunos</B>, você escolhe um
+            horário. Todo dia, nesse horário, quem tem treino marcado na agenda
+            recebe um aviso no celular — e quem já treinou naquele dia não é
+            incomodado.
+          </p>
+          <p>
+            Do lado do aluno, aparece no link dele a pergunta “Quer um lembrete
+            no dia do seu treino?”. Ele toca em <B>Quero</B> e o celular pede a
+            permissão. Só recebe quem aceitar.
+          </p>
+          <Nota titulo="Avise seus alunos de iPhone">
+            No Android funciona direto. No iPhone, ele precisa antes adicionar o
+            treino à tela de início — é uma exigência da Apple, não do sistema.
+            Sem isso, o botão avisa que aquele navegador não aceita lembretes.
+          </Nota>
+          <p className="text-sm text-fumaca">
+            Não usa WhatsApp e não tem custo: é o próprio celular dele que avisa.
+          </p>
+        </Ficha>
+
         <Ficha id="historico" titulo="Histórico de um aluno">
           <p>
             Dentro do aluno, o botão <B>Ver histórico</B> abre três coisas que
@@ -459,6 +481,7 @@ function Indice() {
   const consulta = [
     ["aluno-ve", "O que o aluno vê"],
     ["acompanhar", "Acompanhar quem treina"],
+    ["lembretes", "Lembrete no celular do aluno"],
     ["historico", "Histórico de um aluno"],
     ["avaliacao", "Avaliação física"],
     ["mensalidade", "Mensalidade"],
