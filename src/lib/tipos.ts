@@ -73,10 +73,12 @@ export type Avaliacao = {
   circunferencia_abdominal_cm: number | null;
   torax_cm: number | null;
   quadril_cm: number | null;
-  quadriceps_cm: number | null;
+  quadriceps_direito_cm: number | null;
+  quadriceps_esquerdo_cm: number | null;
   biceps_direito_cm: number | null;
   biceps_esquerdo_cm: number | null;
-  panturrilha_cm: number | null;
+  panturrilha_direita_cm: number | null;
+  panturrilha_esquerda_cm: number | null;
   gordura_corporal_pct: number | null;
   gordura_visceral: number | null;
   massa_corporal_pct: number | null;
@@ -84,10 +86,15 @@ export type Avaliacao = {
 };
 
 /**
- * As medidas da planilha impressa, na ordem em que ela mede.
- * `melhorQuando` diz para onde a seta de evolucao aponta como progresso — mas
- * so a Kelly sabe o que e progresso para cada aluno, entao a tela mostra a
- * diferenca e deixa a leitura com ela em vez de dar veredito.
+ * As medidas da avaliacao, na ordem em que se mede: tronco de cima para baixo,
+ * depois os membros.
+ *
+ * `par` marca o que existe dos dois lados, para a tela conseguir mostrar a
+ * diferenca entre eles. Peso e percentuais nao tem lado; braco e perna tem, e
+ * a assimetria entre eles e informacao clinica, nao detalhe.
+ *
+ * A tela mostra a variacao mas nunca diz se e boa ou ruim: perder cintura e
+ * ganhar biceps sao os dois progresso, e so a Kelly sabe qual era a meta.
  */
 export const MEDIDAS = [
   { campo: "peso_kg", rotulo: "Peso", unidade: "kg" },
@@ -95,10 +102,12 @@ export const MEDIDAS = [
   { campo: "circunferencia_abdominal_cm", rotulo: "Abdômen", unidade: "cm" },
   { campo: "torax_cm", rotulo: "Tórax", unidade: "cm" },
   { campo: "quadril_cm", rotulo: "Quadril", unidade: "cm" },
-  { campo: "quadriceps_cm", rotulo: "Quadríceps", unidade: "cm" },
-  { campo: "biceps_direito_cm", rotulo: "Bíceps direito", unidade: "cm" },
+  { campo: "biceps_direito_cm", rotulo: "Bíceps direito", unidade: "cm", par: "biceps_esquerdo_cm" },
   { campo: "biceps_esquerdo_cm", rotulo: "Bíceps esquerdo", unidade: "cm" },
-  { campo: "panturrilha_cm", rotulo: "Panturrilha", unidade: "cm" },
+  { campo: "quadriceps_direito_cm", rotulo: "Quadríceps direito", unidade: "cm", par: "quadriceps_esquerdo_cm" },
+  { campo: "quadriceps_esquerdo_cm", rotulo: "Quadríceps esquerdo", unidade: "cm" },
+  { campo: "panturrilha_direita_cm", rotulo: "Panturrilha direita", unidade: "cm", par: "panturrilha_esquerda_cm" },
+  { campo: "panturrilha_esquerda_cm", rotulo: "Panturrilha esquerda", unidade: "cm" },
   { campo: "gordura_corporal_pct", rotulo: "Gordura corporal", unidade: "%" },
   { campo: "gordura_visceral", rotulo: "Gordura visceral", unidade: "" },
   { campo: "massa_corporal_pct", rotulo: "Massa corporal", unidade: "%" },
@@ -106,6 +115,7 @@ export const MEDIDAS = [
   campo: keyof Avaliacao;
   rotulo: string;
   unidade: string;
+  par?: keyof Avaliacao;
 }[];
 
 /** Identificador do grupo na URL, para conseguir rolar ate ele e abri-lo. */

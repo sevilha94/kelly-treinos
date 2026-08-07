@@ -400,6 +400,17 @@ export default async function Page() {
             cada medida mostra <strong>quanto mudou</strong> desde a anterior. O
             IMC é calculado sozinho a partir do peso e da altura.
           </p>
+          <Rotulo>Medidas dos dois lados</Rotulo>
+          <p>
+            Bíceps, quadríceps e panturrilha têm campo para o lado{" "}
+            <strong>direito e esquerdo</strong>. Quando a diferença entre eles
+            passa de 1 cm, a tela avisa embaixo do nome da medida — abaixo disso
+            é variação de fita métrica, não assimetria.
+          </p>
+          <p className="text-sm text-fumaca">
+            O aviso é só um número, sem julgamento: alguma diferença é normal
+            por dominância. Quando ela deixa de ser normal, quem sabe é você.
+          </p>
           <Nota titulo="Por que não diz se melhorou">
             O sistema mostra a diferença, mas não julga. Perder cintura e ganhar
             bíceps são os dois progresso, e só você sabe qual era a meta daquele

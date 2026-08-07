@@ -58,13 +58,22 @@ export function Avaliacoes({
               </tr>
             </thead>
             <tbody>
-              {MEDIDAS.map(({ campo, rotulo, unidade }) => {
+              {MEDIDAS.map((medida) => {
+                const { campo, rotulo, unidade } = medida;
                 const valores = colunas.map((a) => a[campo] as number | null);
                 if (valores.every((v) => v === null)) return null;
 
+                const par = "par" in medida ? medida.par : undefined;
+                const outroLado = par
+                  ? (colunas[0]?.[par] as number | null)
+                  : null;
+
                 return (
                   <tr key={campo} className="border-b border-borda/50">
-                    <td className="px-4 py-2 text-fumaca">{rotulo}</td>
+                    <td className="px-4 py-2 text-fumaca">
+                      {rotulo}
+                      <Assimetria deste={valores[0]} doOutro={outroLado} />
+                    </td>
                     {valores.map((valor, indice) => (
                       <td
                         key={colunas[indice].id}
@@ -206,6 +215,33 @@ export function Avaliacoes({
         </form>
       )}
     </Cartao>
+  );
+}
+
+/**
+ * Diferenca entre o lado direito e o esquerdo na avaliacao mais recente.
+ *
+ * Aparece so quando os dois lados foram medidos, e so a partir de 1 cm — abaixo
+ * disso e variacao de fita metrica, nao assimetria. Como no resto da tela, o
+ * numero e mostrado sem veredito: alguma diferenca e normal por dominancia, e
+ * quando ela deixa de ser normal e a Kelly quem sabe.
+ */
+function Assimetria({
+  deste,
+  doOutro,
+}: {
+  deste: number | null;
+  doOutro: number | null;
+}) {
+  if (deste === null || doOutro === null) return null;
+
+  const diferenca = Math.round(Math.abs(Number(deste) - Number(doOutro)) * 10) / 10;
+  if (diferenca < 1) return null;
+
+  return (
+    <span className="mt-0.5 block text-[10px] text-amber-400">
+      {formataNumero(diferenca)} cm de diferença entre os lados
+    </span>
   );
 }
 
