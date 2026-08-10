@@ -88,7 +88,11 @@ export default async function Page() {
       ...nivelDaMensalidade(emAberto.get(aluno.id)),
     }))
     .filter((linha) => linha.nivel !== "em_dia" && linha.nivel !== "paga")
-    .sort((a, b) => ORDEM_NIVEL[a.nivel] - ORDEM_NIVEL[b.nivel] || b.diasDeAtraso - a.diasDeAtraso);
+    .sort(
+      (a, b) =>
+        ORDEM_NIVEL[a.nivel] - ORDEM_NIVEL[b.nivel] ||
+        b.diasDeAtraso - a.diasDeAtraso,
+    );
 
   const bloqueados = cobrancas.filter((c) => c.nivel === "bloqueada").length;
   const aConferir = cobrancas.filter((c) => c.nivel === "conferir").length;
@@ -114,6 +118,19 @@ export default async function Page() {
           rotulo="sem treinar há mais de 7 dias"
           alerta={sumidos.length > 0}
         />
+        {/* so ocupa espaco quando ha o que conferir: contador zerado e ruido */}
+        {aConferir > 0 && (
+          <Atalho
+            href="#mensalidade"
+            numero={aConferir}
+            rotulo={
+              aConferir === 1
+                ? "comprovante para conferir"
+                : "comprovantes para conferir"
+            }
+            alerta
+          />
+        )}
       </div>
 
       <Cartao titulo="Quem sumiu">
@@ -143,40 +160,44 @@ export default async function Page() {
       </Cartao>
 
       {cobrancas.length > 0 && (
-        <Cartao
-          titulo={
-            bloqueados > 0
-              ? `Mensalidade — ${bloqueados} com acesso pausado`
-              : aConferir > 0
-                ? "Mensalidade — comprovante para conferir"
-                : "Mensalidade"
-          }
-        >
-          <ul className="divide-y divide-borda">
-            {cobrancas.map(({ aluno, mensalidade, nivel, diasDeAtraso }) => (
-              <li key={aluno.id}>
-                <Link
-                  href={`/painel/alunos/${aluno.id}`}
-                  className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-grafite"
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate text-base">
-                      {aluno.nome}
+        <div id="mensalidade" className="scroll-mt-4">
+          <Cartao
+            titulo={
+              bloqueados > 0
+                ? `Mensalidade — ${bloqueados} com acesso pausado`
+                : aConferir > 0
+                  ? "Mensalidade — comprovante para conferir"
+                  : "Mensalidade"
+            }
+          >
+            <ul className="divide-y divide-borda">
+              {cobrancas.map(({ aluno, mensalidade, nivel, diasDeAtraso }) => (
+                <li key={aluno.id}>
+                  <Link
+                    href={`/painel/alunos/${aluno.id}`}
+                    className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-grafite"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-base">
+                        {aluno.nome}
+                      </span>
+                      <span className="text-xs text-fumaca">
+                        {nomeDaCompetencia(mensalidade!.competencia)} · R${" "}
+                        {Number(mensalidade!.valor)
+                          .toFixed(2)
+                          .replace(".", ",")}
+                        {diasDeAtraso > 0 && ` · ${diasDeAtraso} dias`}
+                      </span>
                     </span>
-                    <span className="text-xs text-fumaca">
-                      {nomeDaCompetencia(mensalidade!.competencia)} · R${" "}
-                      {Number(mensalidade!.valor).toFixed(2).replace(".", ",")}
-                      {diasDeAtraso > 0 && ` · ${diasDeAtraso} dias`}
+                    <span className={`shrink-0 text-sm ${COR_NIVEL[nivel]}`}>
+                      {ROTULO_NIVEL[nivel]}
                     </span>
-                  </span>
-                  <span className={`shrink-0 text-sm ${COR_NIVEL[nivel]}`}>
-                    {ROTULO_NIVEL[nivel]}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Cartao>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Cartao>
+        </div>
       )}
 
       <details className="rounded-2xl border border-borda bg-carvao">
@@ -204,7 +225,9 @@ export default async function Page() {
               ))}
             </select>
           </label>
-          <BotaoAcao variante="secundario" carregando="Salvando...">Salvar horário</BotaoAcao>
+          <BotaoAcao variante="secundario" carregando="Salvando...">
+            Salvar horário
+          </BotaoAcao>
           <p className="text-xs text-fumaca">
             O aluno só recebe se tiver ligado o lembrete no link dele. No
             iPhone, ele precisa antes adicionar o treino à tela de início.
