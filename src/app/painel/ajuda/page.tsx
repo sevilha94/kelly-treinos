@@ -129,6 +129,13 @@ export default async function Page() {
             realmente usa e vá completando conforme precisar — exercício sem
             vídeo continua funcionando na planilha, só não tem demonstração.
           </Nota>
+          <Nota titulo="Os vídeos abrem sem som">
+            O aluno está na academia, no meio do barulho ou de fone. Todo vídeo
+            começa mudo — o que importa é ver o movimento. Se ele quiser ouvir, é
+            só ligar o som no próprio vídeo. Por isso, ao escolher, olhe se a
+            execução se entende <strong>só de assistir</strong>: vídeo que
+            depende da explicação falada não serve bem aqui.
+          </Nota>
           <p className="text-sm text-fumaca">
             Serve link de vídeo do YouTube, imagem ou GIF. Dá para começar com uma
             imagem hoje e trocar por vídeo depois — inclusive por vídeos gravados

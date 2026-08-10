@@ -17,10 +17,16 @@ export function lerMidia(url: string | null | undefined): Midia {
 
   const id = idDoYoutube(limpo);
   if (id) {
-    // loop precisa do playlist apontando pro proprio video
+    // loop precisa do playlist apontando pro proprio video.
+    //
+    // mute=1 porque o aluno esta na academia, muitas vezes de fone ou no meio
+    // do barulho: o que importa e o movimento, nao a narracao. Vale tambem para
+    // o comeco sozinho funcionar — celular nao deixa video arrancar com som,
+    // entao sem isso o toque na capa abre o player e ele fica parado. Quem
+    // quiser som liga no proprio player.
     return {
       tipo: "youtube",
-      embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1&loop=1&playlist=${id}`,
+      embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1&loop=1&mute=1&playlist=${id}`,
       // capa estatica: pesa alguns KB no lugar de um player inteiro
       capaUrl: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
     };
