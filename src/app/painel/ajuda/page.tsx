@@ -429,6 +429,12 @@ export default async function Page() {
             Existe um botão para lançar na hora, dentro do aluno, mas é só para
             adiantar ou para acertar o primeiro mês.
           </p>
+          <Nota titulo="Preencha sua chave Pix primeiro">
+            No painel, em <B>Chave Pix para receber</B>, coloque a chave e o seu
+            nome. É o que o aluno vê na hora de pagar — sem isso ele não tem
+            para onde mandar o dinheiro. Ele copia a chave com um toque, o que
+            evita o erro mais comum: digitar errado e pagar para um estranho.
+          </Nota>
           <Rotulo>O aluno avisa que pagou</Rotulo>
           <p>
             A cobrança aparece no link dele <strong>5 dias antes de vencer</strong>,
@@ -440,6 +446,18 @@ export default async function Page() {
             Assim que ele envia, a cobrança some da tela dele e só volta no mês
             seguinte. Quem está em dia abre o aplicativo para treinar, não para
             ser lembrado de dinheiro.
+          </p>
+          <Rotulo>Você fica sabendo na hora</Rotulo>
+          <p>
+            Ligue <B>Avisos no seu celular</B> no painel e você recebe uma
+            notificação assim que um aluno enviar comprovante — sem precisar
+            abrir nada. No horário do lembrete você também recebe um resumo, se
+            houver comprovante para conferir ou mensalidade vencida.
+          </p>
+          <p className="text-sm text-fumaca">
+            Vale por aparelho: se usa celular e computador, ligue nos dois. E,
+            como acontece com os alunos, no iPhone é preciso ter o painel na
+            tela de início.
           </p>
           <Rotulo>O que acontece se ele não pagar</Rotulo>
           <ul className="space-y-2 text-sm">

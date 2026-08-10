@@ -1,6 +1,6 @@
-import webpush from "web-push";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { DIAS_DE_ANTECEDENCIA, vencimentoNoMes } from "@/lib/mensalidades";
+import { avisarPainel, enviarAviso } from "@/lib/push";
 
 /**
  * Dispara os lembretes do dia.
@@ -116,50 +116,84 @@ export async function GET(request: Request) {
     ]),
   );
 
-  webpush.setVapidDetails(
-    "mailto:kellyjhuly1991@gmail.com",
-    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-    process.env.VAPID_PRIVATE_KEY!,
-  );
-
   let enviados = 0;
-  const mortas: string[] = [];
 
   for (const assinatura of assinaturas ?? []) {
     const token = podeReceber.get(assinatura.aluno_id);
     if (!token || jaTreinou.has(assinatura.aluno_id)) continue;
 
-    try {
-      await webpush.sendNotification(
-        {
-          endpoint: assinatura.endpoint,
-          keys: { p256dh: assinatura.p256dh, auth: assinatura.auth },
-        },
-        JSON.stringify({
-          ...mensagemPara(
-            treinoDe.get(assinatura.aluno_id),
-            ultimoTreino.get(assinatura.aluno_id),
-            hojeLocal,
-          ),
-          url: `/aluno/${token}`,
-        }),
-      );
-      enviados++;
-    } catch (erro) {
-      // 404/410 = o aparelho desinstalou ou revogou: nao adianta insistir
-      const status = (erro as { statusCode?: number }).statusCode;
-      if (status === 404 || status === 410) mortas.push(assinatura.endpoint);
-    }
+    enviados += await enviarAviso(supabase, "aluno_lembrete", [assinatura], {
+      ...mensagemPara(
+        treinoDe.get(assinatura.aluno_id),
+        ultimoTreino.get(assinatura.aluno_id),
+        hojeLocal,
+      ),
+      url: `/aluno/${token}`,
+    });
   }
 
-  if (mortas.length > 0) {
-    await supabase
-      .from("aluno_lembrete")
-      .update({ desativado_em: new Date().toISOString() })
-      .in("endpoint", mortas);
+  // resumo do dia para a Kelly, no mesmo horario dos lembretes
+  const avisoDoDia = await resumoParaAKelly(supabase, hojeLocal);
+
+  return Response.json({
+    enviados,
+    lancadas,
+    avisoDoDia,
+  });
+}
+
+/**
+ * Resumo diario para a Kelly, no mesmo horario dos lembretes.
+ *
+ * So avisa quando ha algo a fazer. Aviso diario que chega dizendo "esta tudo
+ * bem" e o tipo de coisa que a pessoa aprende a ignorar, e ai o dia em que
+ * importa passa batido tambem.
+ */
+async function resumoParaAKelly(
+  supabase: ReturnType<typeof createAdminClient>,
+  hoje: string,
+) {
+  const [{ data: aConferir }, { data: vencidas }] = await Promise.all([
+    supabase
+      .from("mensalidade")
+      .select("id")
+      .is("pago_em", null)
+      .is("arquivado_em", null)
+      .not("enviado_em", "is", null),
+    supabase
+      .from("mensalidade")
+      .select("id")
+      .is("pago_em", null)
+      .is("arquivado_em", null)
+      .is("enviado_em", null)
+      .lt("vencimento", hoje),
+  ]);
+
+  const partes: string[] = [];
+  if (aConferir?.length) {
+    partes.push(
+      aConferir.length === 1
+        ? "1 comprovante para conferir"
+        : `${aConferir.length} comprovantes para conferir`,
+    );
+  }
+  if (vencidas?.length) {
+    partes.push(
+      vencidas.length === 1
+        ? "1 mensalidade vencida"
+        : `${vencidas.length} mensalidades vencidas`,
+    );
   }
 
-  return Response.json({ enviados, lancadas, desativadas: mortas.length });
+  if (partes.length === 0) return null;
+
+  await avisarPainel(supabase, {
+    titulo: "Resumo do dia",
+    corpo: partes.join(" e ") + ".",
+    url: "/painel",
+  });
+
+  return partes.join(" e ");
 }
 
 /**

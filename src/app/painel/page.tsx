@@ -2,7 +2,8 @@ import Link from "next/link";
 import { BotaoAcao } from "@/componentes/BotaoAcao";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
-import { salvarHoraDoLembrete } from "./alunos/actions";
+import { salvarChavePix, salvarHoraDoLembrete } from "./alunos/actions";
+import { AvisosNoCelular } from "./AvisosNoCelular";
 import { Cartao, Vazio } from "@/componentes/Cartao";
 import {
   frequenciaPorAluno,
@@ -40,27 +41,38 @@ const COR_NIVEL: Record<Nivel, string> = {
 export default async function Page() {
   const supabase = await createClient();
 
-  const [alunosRes, exerciciosRes, frequencias, emAberto, configRes] =
-    await Promise.all([
-      supabase
-        .from("aluno")
-        .select("id, nome")
-        .is("arquivado_em", null)
-        .order("nome"),
-      supabase
-        .from("exercicio")
-        .select("id", { count: "exact", head: true })
-        .is("arquivado_em", null),
-      frequenciaPorAluno(supabase),
-      emAbertoPorAluno(supabase),
-      supabase
-        .from("configuracao")
-        .select("valor")
-        .eq("chave", "hora_lembrete")
-        .maybeSingle(),
-    ]);
+  const [
+    alunosRes,
+    exerciciosRes,
+    frequencias,
+    emAberto,
+    configRes,
+    avisosRes,
+  ] = await Promise.all([
+    supabase
+      .from("aluno")
+      .select("id, nome")
+      .is("arquivado_em", null)
+      .order("nome"),
+    supabase
+      .from("exercicio")
+      .select("id", { count: "exact", head: true })
+      .is("arquivado_em", null),
+    frequenciaPorAluno(supabase),
+    emAbertoPorAluno(supabase),
+    supabase.from("configuracao").select("chave, valor"),
+    supabase
+      .from("painel_lembrete")
+      .select("id", { count: "exact", head: true })
+      .is("desativado_em", null),
+  ]);
 
-  const horaLembrete = Number(configRes.data?.valor ?? 7);
+  const config = new Map(
+    (configRes.data ?? []).map((linha) => [linha.chave, linha.valor]),
+  );
+  const horaLembrete = Number(config.get("hora_lembrete") ?? 7);
+  const chavePix = config.get("chave_pix") ?? "";
+  const titularPix = config.get("titular_pix") ?? "";
 
   const alunos = alunosRes.data ?? [];
 
@@ -199,6 +211,56 @@ export default async function Page() {
           </Cartao>
         </div>
       )}
+
+      <details
+        className="rounded-2xl border border-borda bg-carvao"
+        open={!chavePix}
+      >
+        <summary className="cursor-pointer px-4 py-3 text-sm uppercase tracking-wider text-fumaca hover:text-gelo">
+          Chave Pix para receber
+          {!chavePix && (
+            <span className="ml-2 text-sangue-claro">falta preencher</span>
+          )}
+        </summary>
+        <form action={salvarChavePix} className="space-y-3 px-4 pb-4">
+          <p className="text-sm leading-relaxed text-fumaca">
+            É o que o aluno vê na hora de pagar. Sem isso ele não tem para onde
+            mandar o Pix.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block">
+              <span className="mb-1 block text-[10px] uppercase tracking-widest text-fumaca">
+                Chave Pix
+              </span>
+              <input
+                name="chave_pix"
+                defaultValue={chavePix}
+                placeholder="CPF, celular, e-mail ou aleatória"
+                className="w-full rounded-lg border border-borda bg-grafite px-3 py-2 text-sm text-gelo placeholder:text-fumaca/60 focus:border-sangue focus:outline-none"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-[10px] uppercase tracking-widest text-fumaca">
+                Nome do titular
+              </span>
+              <input
+                name="titular_pix"
+                defaultValue={titularPix}
+                placeholder="Kelly Jhuly ..."
+                className="w-full rounded-lg border border-borda bg-grafite px-3 py-2 text-sm text-gelo placeholder:text-fumaca/60 focus:border-sangue focus:outline-none"
+              />
+            </label>
+          </div>
+          <BotaoAcao variante="secundario" carregando="Salvando...">
+            Salvar chave
+          </BotaoAcao>
+          <p className="text-xs text-fumaca">
+            Só quem tem o link de aluno enxerga isso — não fica público.
+          </p>
+        </form>
+      </details>
+
+      <AvisosNoCelular jaLigado={(avisosRes.count ?? 0) > 0} />
 
       <details className="rounded-2xl border border-borda bg-carvao">
         <summary className="cursor-pointer px-4 py-3 text-sm uppercase tracking-wider text-fumaca hover:text-gelo">

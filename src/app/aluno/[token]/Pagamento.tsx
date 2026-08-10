@@ -5,6 +5,7 @@ import { enviarComprovante, type EstadoComprovante } from "./actions";
 import { BotaoAcao } from "@/componentes/BotaoAcao";
 import { formataData } from "@/lib/tipos";
 import { nivelDaMensalidade, type Mensalidade } from "@/lib/mensalidades";
+import { ChavePix } from "./ChavePix";
 
 /**
  * Onde o aluno avisa que pagou.
@@ -15,9 +16,13 @@ import { nivelDaMensalidade, type Mensalidade } from "@/lib/mensalidades";
 export function Pagamento({
   token,
   emAberto,
+  chavePix,
+  titularPix,
 }: {
   token: string;
   emAberto: Mensalidade;
+  chavePix: string;
+  titularPix: string;
 }) {
   const [estado, acao] = useActionState<EstadoComprovante, FormData>(
     enviarComprovante,
@@ -62,6 +67,8 @@ export function Pagamento({
           </p>
         )}
       </div>
+
+      {chavePix && <ChavePix chave={chavePix} titular={titularPix} />}
 
       <label className="block">
         <span className="mb-1 block text-[10px] uppercase tracking-widest text-fumaca">

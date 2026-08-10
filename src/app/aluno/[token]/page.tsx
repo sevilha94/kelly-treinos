@@ -110,6 +110,7 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
     avaliacoesRes,
     lembretesRes,
     sessoesRes,
+    configRes,
   ] = await Promise.all([
     supabase
       .from("mensalidade")
@@ -151,7 +152,12 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
       .eq("aluno_id", aluno.id)
       .is("desativado_em", null),
     consultaDeSessoes(supabase, aluno.id),
+    supabase.from("configuracao").select("chave, valor"),
   ]);
+
+  const config = new Map(
+    (configRes.data ?? []).map((linha) => [linha.chave, linha.valor]),
+  );
 
   const emAberto = (mensalidadeRes.data ?? undefined) as
     Mensalidade | undefined;
@@ -337,7 +343,12 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
       </ul>
 
       {(deveMostrarCobranca(emAberto) || enviadoHoje(emAberto)) && (
-        <Pagamento token={token} emAberto={emAberto!} />
+        <Pagamento
+          token={token}
+          emAberto={emAberto!}
+          chavePix={config.get("chave_pix") ?? ""}
+          titularPix={config.get("titular_pix") ?? ""}
+        />
       )}
 
       <Lembretes token={token} jaLigado={(lembretesRes.count ?? 0) > 0} />

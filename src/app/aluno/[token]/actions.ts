@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { avisarPainel } from "@/lib/push";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
@@ -207,6 +209,22 @@ export async function enviarComprovante(
       forma: "Pix",
     })
     .eq("id", mensalidade.id);
+
+  // o aviso vai depois da resposta: o aluno nao pode esperar o celular da
+  // Kelly para saber que o envio deu certo
+  const { data: aluno } = await contexto.supabase
+    .from("aluno")
+    .select("nome")
+    .eq("id", contexto.alunoId)
+    .single();
+
+  after(() =>
+    avisarPainel(contexto.supabase, {
+      titulo: "Comprovante recebido",
+      corpo: `${aluno?.nome ?? "Um aluno"} enviou o comprovante do Pix.`,
+      url: "/painel",
+    }),
+  );
 
   revalidatePath(`/aluno/${token}`);
   return { enviado: true };

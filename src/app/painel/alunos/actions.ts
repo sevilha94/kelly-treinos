@@ -464,6 +464,34 @@ export async function alternarPagamento(formData: FormData) {
   revalidatePath("/painel");
 }
 
+/**
+ * A chave Pix que o aluno ve na hora de pagar.
+ *
+ * Fica em configuracao porque e uma so para todos. O nome do titular vai junto:
+ * quem paga para uma chave desconhecida quer conferir o nome antes de confirmar.
+ */
+export async function salvarChavePix(formData: FormData) {
+  const supabase = await exigirLogin();
+
+  await supabase.from("configuracao").upsert(
+    [
+      {
+        chave: "chave_pix",
+        valor: texto(formData, "chave_pix") ?? "",
+        atualizado_em: new Date().toISOString(),
+      },
+      {
+        chave: "titular_pix",
+        valor: texto(formData, "titular_pix") ?? "",
+        atualizado_em: new Date().toISOString(),
+      },
+    ],
+    { onConflict: "chave" },
+  );
+
+  revalidatePath("/painel");
+}
+
 /** Horario em que os lembretes saem, igual para todos os alunos. */
 export async function salvarHoraDoLembrete(formData: FormData) {
   const supabase = await exigirLogin();
