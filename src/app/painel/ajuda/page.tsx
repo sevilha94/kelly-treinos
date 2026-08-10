@@ -420,16 +420,26 @@ export default async function Page() {
 
         <Ficha id="mensalidade" titulo="Mensalidade">
           <p>
-            O valor e o dia do vencimento você já preenche no{" "}
-            <B>cadastro do aluno</B>. Depois é só clicar em{" "}
-            <B>Lançar a mensalidade</B> do mês.
+            O valor e o dia do vencimento você preenche uma vez, no{" "}
+            <B>cadastro do aluno</B>. <strong>Depois disso é automático:</strong>{" "}
+            o sistema lança a mensalidade de cada mês sozinho, 5 dias antes de
+            vencer. Você não precisa fazer nada todo mês.
+          </p>
+          <p className="text-sm text-fumaca">
+            Existe um botão para lançar na hora, dentro do aluno, mas é só para
+            adiantar ou para acertar o primeiro mês.
           </p>
           <Rotulo>O aluno avisa que pagou</Rotulo>
           <p>
-            Quando existe mensalidade em aberto, aparece no link dele um botão{" "}
-            <B>Já paguei — enviar comprovante</B>. Ele anexa o print do Pix ali
-            mesmo. Você vê <B>Ver comprovante</B> no painel, confere e clica em{" "}
-            <B>Marcar paga</B>.
+            A cobrança aparece no link dele <strong>5 dias antes de vencer</strong>,
+            com o botão <B>Já paguei — enviar comprovante</B>. Ele anexa o print
+            do Pix ali mesmo. Você vê <B>Ver comprovante</B> no painel, confere e
+            clica em <B>Marcar paga</B>.
+          </p>
+          <p className="text-sm text-fumaca">
+            Assim que ele envia, a cobrança some da tela dele e só volta no mês
+            seguinte. Quem está em dia abre o aplicativo para treinar, não para
+            ser lembrado de dinheiro.
           </p>
           <Rotulo>O que acontece se ele não pagar</Rotulo>
           <ul className="space-y-2 text-sm">

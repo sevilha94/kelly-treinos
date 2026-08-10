@@ -1,5 +1,6 @@
 import webpush from "web-push";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { DIAS_DE_ANTECEDENCIA, vencimentoNoMes } from "@/lib/mensalidades";
 
 /**
  * Dispara os lembretes do dia.
@@ -31,6 +32,11 @@ export async function GET(request: Request) {
     timeZone: "America/Sao_Paulo",
   }).format(agora);
 
+  // roda sempre, independente do horario do lembrete: e idempotente, e deixar
+  // para um horario so significaria a cobranca nascer atrasada se aquela
+  // execucao falhasse
+  const lancadas = await lancarMensalidadesDoMes(supabase, hojeLocal);
+
   const { data: config } = await supabase
     .from("configuracao")
     .select("valor")
@@ -39,7 +45,12 @@ export async function GET(request: Request) {
 
   const horaEscolhida = Number(config?.valor ?? 7);
   if (horaLocal !== horaEscolhida) {
-    return Response.json({ enviados: 0, motivo: "fora do horário", horaLocal });
+    return Response.json({
+      enviados: 0,
+      lancadas,
+      motivo: "fora do horário do lembrete",
+      horaLocal,
+    });
   }
 
   // segunda = 1 ... domingo = 7, como a agenda guarda
@@ -52,7 +63,7 @@ export async function GET(request: Request) {
     .not("treino_id", "is", null);
 
   if (!agenda?.length) {
-    return Response.json({ enviados: 0, motivo: "ninguém treina hoje" });
+    return Response.json({ enviados: 0, lancadas, motivo: "ninguém treina hoje" });
   }
 
   const [{ data: assinaturas }, { data: sessoes }, { data: alunos }] =
@@ -148,7 +159,59 @@ export async function GET(request: Request) {
       .in("endpoint", mortas);
   }
 
-  return Response.json({ enviados, desativadas: mortas.length });
+  return Response.json({ enviados, lancadas, desativadas: mortas.length });
+}
+
+/**
+ * Cria a mensalidade do mes de quem tem valor e vencimento combinados.
+ *
+ * Nasce cinco dias antes de vencer — cedo o bastante para o aluno se organizar,
+ * tarde o bastante para nao ficar um mes inteiro cobrando quem esta em dia.
+ *
+ * A janela vai ate o proprio vencimento. Aluno cadastrado depois do dia de
+ * vencimento dele so comeca a pagar no mes seguinte, em vez de receber uma
+ * cobranca ja nascendo atrasada.
+ */
+async function lancarMensalidadesDoMes(
+  supabase: ReturnType<typeof createAdminClient>,
+  hoje: string,
+) {
+  const { data: alunos } = await supabase
+    .from("aluno")
+    .select("id, valor_mensalidade, dia_vencimento")
+    .is("arquivado_em", null)
+    .not("valor_mensalidade", "is", null)
+    .not("dia_vencimento", "is", null);
+
+  if (!alunos?.length) return 0;
+
+  const competencia = `${hoje.slice(0, 7)}-01`;
+  const novas = [];
+
+  for (const aluno of alunos) {
+    const vencimento = vencimentoNoMes(aluno.dia_vencimento, hoje);
+    const faltam = diferencaEmDias(hoje, vencimento);
+
+    if (faltam > DIAS_DE_ANTECEDENCIA || faltam < 0) continue;
+
+    novas.push({
+      aluno_id: aluno.id,
+      competencia,
+      valor: aluno.valor_mensalidade,
+      vencimento,
+    });
+  }
+
+  if (novas.length === 0) return 0;
+
+  // ignoreDuplicates: rodando de hora em hora, a segunda vez do dia nao pode
+  // sobrescrever uma mensalidade que a Kelly ja tenha ajustado ou dado baixa
+  const { data } = await supabase
+    .from("mensalidade")
+    .upsert(novas, { onConflict: "aluno_id,competencia", ignoreDuplicates: true })
+    .select("id");
+
+  return data?.length ?? 0;
 }
 
 /** Quantos dias faz que o aluno sumiu passa a valer mais do que a letra de hoje. */

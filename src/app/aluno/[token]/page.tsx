@@ -22,6 +22,8 @@ import { marcarExercicio, finalizarTreino } from "./actions";
 
 import {
   deveBloquearPorAtraso,
+  deveMostrarCobranca,
+  enviadoHoje,
   nomeDaCompetencia,
   type Mensalidade,
 } from "@/lib/mensalidades";
@@ -334,7 +336,9 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
         })}
       </ul>
 
-      {emAberto && <Pagamento token={token} emAberto={emAberto} />}
+      {(deveMostrarCobranca(emAberto) || enviadoHoje(emAberto)) && (
+        <Pagamento token={token} emAberto={emAberto!} />
+      )}
 
       <Lembretes token={token} jaLigado={(lembretesRes.count ?? 0) > 0} />
 

@@ -102,8 +102,12 @@ export function Cobranca({
         <form action={gerarMensalidade} className="border-t border-borda px-4 py-3">
           <input type="hidden" name="aluno_id" value={aluno.id} />
           <BotaoAcao variante="secundario" carregando="Lançando..." className="h-10">
-            Lançar a mensalidade de {nomeDaCompetencia(competenciaAtual())}
+            Lançar agora a de {nomeDaCompetencia(competenciaAtual())}
           </BotaoAcao>
+          <p className="mt-2 text-xs text-fumaca">
+            Normalmente não precisa: o sistema lança sozinho 5 dias antes do
+            vencimento. Este botão é para adiantar ou para o primeiro mês.
+          </p>
         </form>
       )}
 

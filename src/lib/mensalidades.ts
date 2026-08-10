@@ -19,6 +19,44 @@ export type Mensalidade = {
 export const DIAS_CRITICO = 5;
 export const DIAS_BLOQUEIO = 7;
 
+/**
+ * Quantos dias antes do vencimento a cobranca e criada e passa a aparecer para
+ * o aluno. Antes disso ele nao precisa pensar nisso; a tela dele e de treino.
+ */
+export const DIAS_DE_ANTECEDENCIA = 5;
+
+/**
+ * Se o aluno deve ver a cobranca agora.
+ *
+ * Some assim que ele envia o comprovante e so volta no proximo ciclo. Quem esta
+ * em dia abre o aplicativo para treinar, nao para ser lembrado de dinheiro.
+ */
+export function deveMostrarCobranca(
+  emAberto: Mensalidade | undefined,
+): emAberto is Mensalidade {
+  if (!emAberto || emAberto.pago_em || emAberto.enviado_em) return false;
+  return diasAtras(emAberto.vencimento) >= -DIAS_DE_ANTECEDENCIA;
+}
+
+/**
+ * Comprovante enviado hoje.
+ *
+ * Serve para o aluno ainda ver o "recebido, obrigado" na visita em que enviou,
+ * em vez de o bloco sumir do nada. Amanha ja nao aparece.
+ */
+export function enviadoHoje(emAberto: Mensalidade | undefined): boolean {
+  if (!emAberto?.enviado_em || emAberto.pago_em) return false;
+  return emAberto.enviado_em.slice(0, 10) === new Date().toISOString().slice(0, 10);
+}
+
+/**
+ * O vencimento daquele aluno no mes de uma data.
+ * Dia limitado a 28 no cadastro, entao existe em qualquer mes.
+ */
+export function vencimentoNoMes(dia: number, referencia: string): string {
+  return `${referencia.slice(0, 7)}-${String(dia).padStart(2, "0")}`;
+}
+
 export type Nivel =
   | "paga"
   | "conferir"
