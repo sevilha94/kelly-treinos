@@ -179,6 +179,21 @@ export default async function Page() {
             Faltou algum exercício que você usa? Use <B>Novo exercício</B> e
             cadastre do seu jeito — ele entra sozinho no grupo muscular certo.
           </p>
+          <Rotulo>Tirar um exercício da lista</Rotulo>
+          <p className="text-sm text-fumaca">
+            Sobrou exercício que você não usa? Abra ele e clique em{" "}
+            <B>Excluir exercício</B>, no fim da tela. Ele some da biblioteca e da
+            lista de montar planilha, e a sua lista fica só com o que interessa.
+          </p>
+          <Nota titulo="Excluir aqui não estraga planilha de aluno">
+            Quem já tem esse exercício na planilha continua vendo tudo normal —
+            nome, vídeo e dica. O que muda é só a sua lista.
+          </Nota>
+          <p className="text-sm text-fumaca">
+            Excluiu sem querer? No fim da página da biblioteca aparece{" "}
+            <B>Exercícios excluídos</B>. Abra e clique em <B>Trazer de volta</B>.
+            Nada é apagado de verdade.
+          </p>
         </Passo>
 
         <Passo numero={3} id="aluno" titulo="Cadastrar um aluno">
@@ -237,7 +252,7 @@ export default async function Page() {
           </Nota>
           <Nota titulo="O que não tem volta, pergunta antes">
             Cinco ações abrem uma pergunta de confirmação: gerar novo link,
-            excluir treino, tirar exercício da biblioteca, apagar avaliação e
+            excluir treino, excluir exercício, apagar avaliação e
             arquivar aluno. O resto salva direto — se perguntasse em tudo, você
             aprenderia a clicar em “ok” sem ler, e aí a pergunta não protegeria
             mais nada.

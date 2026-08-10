@@ -3,25 +3,34 @@ import { BotaoAcao } from "@/componentes/BotaoAcao";
 import { createClient } from "@/lib/supabase/server";
 import { Cartao, Vazio } from "@/componentes/Cartao";
 import { lerMidia } from "@/lib/midia";
-import { preencherBiblioteca } from "./actions";
+import { preencherBiblioteca, restaurarExercicio } from "./actions";
 import { comunsFaltando } from "@/lib/exerciciosComuns";
 import { idDoGrupo, type Exercicio } from "@/lib/tipos";
 
 export default async function Page(props: PageProps<"/painel/exercicios">) {
-  const { sem, g } = await props.searchParams;
+  const { sem, g, excluido } = await props.searchParams;
   const soSemMidia = sem === "1";
   // grupo que acabou de receber um exercicio: chega aberto e com a pagina rolada
   const grupoDestacado = typeof g === "string" ? g : undefined;
+  const acabouDeExcluir = excluido === "1";
 
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("exercicio")
-    .select("id, nome, grupo_muscular, midia_url, dica")
-    .is("arquivado_em", null)
-    .order("grupo_muscular")
-    .order("nome");
+  const [{ data }, { data: dadosArquivados }] = await Promise.all([
+    supabase
+      .from("exercicio")
+      .select("id, nome, grupo_muscular, midia_url, dica")
+      .is("arquivado_em", null)
+      .order("grupo_muscular")
+      .order("nome"),
+    supabase
+      .from("exercicio")
+      .select("id, nome, grupo_muscular, midia_url, dica")
+      .not("arquivado_em", "is", null)
+      .order("arquivado_em", { ascending: false }),
+  ]);
 
   const todos = (data ?? []) as Exercicio[];
+  const arquivados = (dadosArquivados ?? []) as Exercicio[];
   const semMidia = todos.filter((ex) => !ex.midia_url?.trim());
   const faltando = comunsFaltando(todos.map((ex) => ex.nome));
   const exercicios = soSemMidia ? semMidia : todos;
@@ -38,6 +47,14 @@ export default async function Page(props: PageProps<"/painel/exercicios">) {
           Novo exercício
         </Link>
       </div>
+
+      {acabouDeExcluir && (
+        // some sozinho na proxima navegacao, porque vive no endereco
+        <p className="rounded-2xl border border-borda bg-carvao px-4 py-3 text-sm">
+          Exercício excluído. Se foi sem querer, ele está em{" "}
+          <strong>Exercícios excluídos</strong>, no fim desta página.
+        </p>
+      )}
 
       {todos.length === 0 ? (
         <Cartao titulo="Comece por aqui">
@@ -153,6 +170,43 @@ export default async function Page(props: PageProps<"/painel/exercicios">) {
             ))
           )}
         </>
+      )}
+
+      {arquivados.length > 0 && (
+        // fechado por padrao: e o cesto de lixo, nao a biblioteca. Mas precisa
+        // existir, senao excluir vira decisao sem volta e ela deixa de excluir
+        <details className="rounded-2xl border border-borda bg-carvao">
+          <summary className="cursor-pointer px-4 py-3 text-sm uppercase tracking-wider text-fumaca hover:text-gelo">
+            {arquivados.length === 1
+              ? "1 exercício excluído"
+              : `${arquivados.length} exercícios excluídos`}
+          </summary>
+          <ul className="divide-y divide-borda border-t border-borda">
+            {arquivados.map((ex) => (
+              <li
+                key={ex.id}
+                className="flex items-center justify-between gap-3 px-4 py-3"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-base">{ex.nome}</span>
+                  <span className="text-xs text-fumaca">
+                    {ex.grupo_muscular}
+                  </span>
+                </span>
+                <form action={restaurarExercicio}>
+                  <input type="hidden" name="id" value={ex.id} />
+                  <BotaoAcao variante="secundario" carregando="Trazendo...">
+                    Trazer de volta
+                  </BotaoAcao>
+                </form>
+              </li>
+            ))}
+          </ul>
+          <p className="px-4 py-3 text-xs text-fumaca">
+            Excluído some da biblioteca e da lista de montar planilha. As
+            planilhas que já usam continuam mostrando o exercício normalmente.
+          </p>
+        </details>
       )}
     </div>
   );

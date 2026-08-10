@@ -154,6 +154,15 @@ export async function preencherBiblioteca(): Promise<void> {
 }
 
 
+/**
+ * Tira o exercicio da biblioteca sem apagar de verdade.
+ *
+ * As planilhas que ja usam ele continuam mostrando normalmente — a tela do
+ * aluno busca o exercicio pelo vinculo, sem perguntar se esta arquivado. O que
+ * some e a biblioteca e a lista de montar planilha, que e o que ela quis
+ * limpar. Apagar a linha, alem de nao ter volta, deixaria buraco nas planilhas
+ * antigas.
+ */
 export async function arquivarExercicio(formData: FormData) {
   const supabase = await exigirLogin();
   const id = String(formData.get("id") ?? "");
@@ -164,5 +173,18 @@ export async function arquivarExercicio(formData: FormData) {
     .eq("id", id);
 
   revalidatePath("/painel/exercicios");
-  redirect("/painel/exercicios");
+  redirect("/painel/exercicios?excluido=1");
+}
+
+/** Traz de volta o que ela excluiu — inclusive por engano. */
+export async function restaurarExercicio(formData: FormData) {
+  const supabase = await exigirLogin();
+  const id = String(formData.get("id") ?? "");
+
+  await supabase
+    .from("exercicio")
+    .update({ arquivado_em: null })
+    .eq("id", id);
+
+  revalidatePath("/painel/exercicios");
 }
