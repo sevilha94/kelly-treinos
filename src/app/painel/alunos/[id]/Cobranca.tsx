@@ -1,7 +1,6 @@
 import { Cartao, Vazio } from "@/componentes/Cartao";
 import { BotaoAcao } from "@/componentes/BotaoAcao";
 import { alternarPagamento, gerarMensalidade, salvarCobranca } from "../actions";
-import { VerComprovante } from "./VerComprovante";
 import {
   competenciaAtual,
   nivelDaMensalidade,
@@ -74,7 +73,14 @@ export function Cobranca({
                 </span>
 
                 {mensalidade.comprovante_caminho && (
-                  <VerComprovante caminho={mensalidade.comprovante_caminho} />
+                  <a
+                    href={`/painel/comprovante/${mensalidade.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-9 shrink-0 items-center rounded-lg border border-borda px-3 text-xs uppercase tracking-wider text-gelo hover:border-fumaca"
+                  >
+                    Ver comprovante
+                  </a>
                 )}
 
                 <form action={alternarPagamento}>

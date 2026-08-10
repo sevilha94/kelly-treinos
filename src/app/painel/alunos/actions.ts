@@ -30,11 +30,6 @@ function numero(formData: FormData, campo: string) {
   return Number.isFinite(convertido) ? convertido : null;
 }
 
-/**
- * O banco so aceita descanso entre 0 e 900 segundos. Sem este limite, digitar
- * 1200 fazia a gravacao inteira ser recusada em silencio: a tela voltava igual
- * e a Kelly achava que tinha salvado.
- */
 /** O banco so aceita de 1 a 28, para o vencimento existir em fevereiro tambem. */
 function diaDeVencimento(formData: FormData) {
   const valor = numero(formData, "dia_vencimento");
@@ -42,6 +37,11 @@ function diaDeVencimento(formData: FormData) {
   return Math.min(28, Math.max(1, Math.round(valor)));
 }
 
+/**
+ * O banco so aceita descanso entre 0 e 900 segundos. Sem este limite, digitar
+ * 1200 fazia a gravacao inteira ser recusada em silencio: a tela voltava igual
+ * e a Kelly achava que tinha salvado.
+ */
 function segundosDeDescanso(formData: FormData) {
   const valor = numero(formData, "descanso_segundos");
   if (valor === null) return null;
@@ -428,23 +428,6 @@ export async function gerarMensalidade(formData: FormData) {
 
   revalidatePath(`/painel/alunos/${alunoId}`);
   revalidatePath("/painel");
-}
-
-/**
- * Endereco temporario para a Kelly ver o comprovante.
- *
- * O bucket e privado e continua sendo: o link vale uma hora e depois morre.
- * Comprovante tem nome, valor e conta de quem pagou — nao pode virar endereco
- * publico que qualquer um abre para sempre.
- */
-export async function verComprovante(caminho: string) {
-  const supabase = await exigirLogin();
-
-  const { data } = await supabase.storage
-    .from("comprovantes")
-    .createSignedUrl(caminho, 60 * 60);
-
-  return data?.signedUrl ?? null;
 }
 
 export async function alternarPagamento(formData: FormData) {
