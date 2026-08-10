@@ -3,10 +3,60 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { comunsFaltando } from "@/lib/exerciciosComuns";
 import { idDoGrupo } from "@/lib/tipos";
+import { arquivoDoVideoEnviado, PASTA_DOS_VIDEOS } from "@/lib/midia";
 
 export type EstadoExercicio = { erro?: string };
+
+/** Formatos que celular gera: Android manda .mp4, iPhone manda .mov. */
+const EXTENSOES_ACEITAS: Record<string, string> = {
+  mp4: "video/mp4",
+  mov: "video/quicktime",
+  webm: "video/webm",
+};
+
+export type EnvioDeVideo =
+  | { enderecoDeEnvio: string; enderecoFinal: string }
+  | { erro: string };
+
+/**
+ * Abre a porta para o navegador dela mandar o video direto ao Supabase.
+ *
+ * O arquivo nao passa por aqui de proposito: video de celular tem dezenas de
+ * megabytes e nao cabe no corpo de uma acao de servidor. Entao o servidor faz
+ * so o que exige confianca — confere o login e assina um cracha valido para um
+ * unico arquivo — e o navegador carrega o resto sozinho, podendo mostrar o
+ * quanto ja subiu.
+ */
+export async function pedirEnvioDeVideo(
+  nomeDoArquivo: string,
+): Promise<EnvioDeVideo> {
+  await exigirLogin();
+
+  const extensao = nomeDoArquivo.split(".").pop()?.toLowerCase() ?? "";
+  if (!EXTENSOES_ACEITAS[extensao]) {
+    return { erro: "Formato de vídeo não aceito. Use um vídeo do celular." };
+  }
+
+  // nome novo em vez do nome original: dois videos chamados IMG_0001.mov nao
+  // podem se sobrescrever, e o nome do arquivo dela nao vai parar na internet
+  const arquivo = `${crypto.randomUUID()}.${extensao}`;
+
+  const { data, error } = await createAdminClient()
+    .storage.from("videos")
+    .createSignedUploadUrl(arquivo);
+
+  if (error || !data) {
+    return { erro: "Não consegui preparar o envio. Tente de novo." };
+  }
+
+  return {
+    enderecoDeEnvio: data.signedUrl,
+    enderecoFinal: `${PASTA_DOS_VIDEOS}${arquivo}`,
+  };
+}
 
 async function exigirLogin() {
   const supabase = await createClient();
@@ -38,11 +88,29 @@ export async function salvarExercicio(
     atualizado_em: new Date().toISOString(),
   };
 
+  // guarda o link anterior antes de sobrescrever: se era video enviado por ela
+  // e agora e outro, o arquivo velho vira peso morto no deposito
+  const anterior = id
+    ? (
+        await supabase
+          .from("exercicio")
+          .select("midia_url")
+          .eq("id", id)
+          .maybeSingle()
+      ).data?.midia_url
+    : null;
+
   const { error } = id
     ? await supabase.from("exercicio").update(dados).eq("id", id)
     : await supabase.from("exercicio").insert(dados);
 
   if (error) return { erro: "Não consegui salvar. Tente de novo." };
+
+  const videoTrocado =
+    anterior !== dados.midia_url ? arquivoDoVideoEnviado(anterior) : null;
+  if (videoTrocado) {
+    await createAdminClient().storage.from("videos").remove([videoTrocado]);
+  }
 
   revalidatePath("/painel/exercicios");
 

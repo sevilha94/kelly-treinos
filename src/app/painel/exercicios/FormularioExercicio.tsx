@@ -5,7 +5,9 @@ import { salvarExercicio, type EstadoExercicio } from "./actions";
 import { Campo } from "@/componentes/Campo";
 import { Botao } from "@/componentes/Botao";
 import { MidiaExercicio } from "@/componentes/MidiaExercicio";
+import { EnvioDeVideo } from "./EnvioDeVideo";
 import { GRUPOS_MUSCULARES, type Exercicio } from "@/lib/tipos";
+import { PASTA_DOS_VIDEOS } from "@/lib/midia";
 
 export function FormularioExercicio({
   exercicio,
@@ -23,6 +25,8 @@ export function FormularioExercicio({
   const buscaNoYoutube = `https://www.youtube.com/results?search_query=${encodeURIComponent(
     `${nome} execução correta`,
   )}`;
+
+  const videoProprio = midiaUrl.startsWith(PASTA_DOS_VIDEOS);
 
   return (
     <form action={acao} className="space-y-4">
@@ -53,32 +57,68 @@ export function FormularioExercicio({
         obrigatorio
       />
 
-      <label className="block">
-        <span className="mb-1.5 block text-xs uppercase tracking-widest text-fumaca">
-          Link da demonstração
-        </span>
-        <input
-          name="midia_url"
-          value={midiaUrl}
-          onChange={(e) => setMidiaUrl(e.target.value)}
-          placeholder="https://youtube.com/... ou link de uma imagem/GIF"
-          className="w-full rounded-lg border border-borda bg-grafite px-3 py-2.5 text-base text-gelo placeholder:text-fumaca/60 focus:border-sangue focus:outline-none"
-        />
-        <span className="mt-1 block text-xs text-fumaca">
-          Serve imagem, GIF ou vídeo do YouTube. Dá para começar com imagem e
-          trocar por vídeo depois.
-        </span>
-      </label>
+      {videoProprio ? (
+        // com o video enviado, o campo viraria um endereco enorme e sem sentido
+        // para ela. Melhor dizer o que e e oferecer a saida
+        <div className="space-y-1.5">
+          <span className="block text-xs uppercase tracking-widest text-fumaca">
+            Demonstração
+          </span>
+          <input type="hidden" name="midia_url" value={midiaUrl} />
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-borda bg-grafite px-3 py-2.5">
+            <p className="text-sm">Vídeo seu, gravado e enviado por você.</p>
+            <button
+              type="button"
+              onClick={() => setMidiaUrl("")}
+              className="shrink-0 text-xs uppercase tracking-wider text-fumaca underline"
+            >
+              Trocar
+            </button>
+          </div>
+          <p className="text-xs text-fumaca">
+            Ele só sai do ar quando você trocar ou remover aqui.
+          </p>
+        </div>
+      ) : (
+        <>
+          <label className="block">
+            <span className="mb-1.5 block text-xs uppercase tracking-widest text-fumaca">
+              Link da demonstração
+            </span>
+            <input
+              name="midia_url"
+              value={midiaUrl}
+              onChange={(e) => setMidiaUrl(e.target.value)}
+              placeholder="https://youtube.com/... ou link de uma imagem/GIF"
+              className="w-full rounded-lg border border-borda bg-grafite px-3 py-2.5 text-base text-gelo placeholder:text-fumaca/60 focus:border-sangue focus:outline-none"
+            />
+            <span className="mt-1 block text-xs text-fumaca">
+              Serve imagem, GIF ou vídeo do YouTube. Dá para começar com imagem e
+              trocar por vídeo depois.
+            </span>
+          </label>
 
-      {nome.trim() && (
-        <a
-          href={buscaNoYoutube}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex h-10 items-center rounded-lg border border-borda px-4 text-xs font-semibold uppercase tracking-wider text-gelo hover:border-fumaca"
-        >
-          Procurar “{nome.trim()}” no YouTube
-        </a>
+          {nome.trim() && (
+            <a
+              href={buscaNoYoutube}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-10 items-center rounded-lg border border-borda px-4 text-xs font-semibold uppercase tracking-wider text-gelo hover:border-fumaca"
+            >
+              Procurar “{nome.trim()}” no YouTube
+            </a>
+          )}
+
+          <div className="flex items-center gap-3">
+            <span className="h-px flex-1 bg-borda" />
+            <span className="text-[10px] uppercase tracking-widest text-fumaca">
+              ou
+            </span>
+            <span className="h-px flex-1 bg-borda" />
+          </div>
+
+          <EnvioDeVideo aoEnviar={setMidiaUrl} />
+        </>
       )}
 
       <div>

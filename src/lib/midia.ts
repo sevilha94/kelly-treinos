@@ -11,6 +11,23 @@ export type Midia =
 
 const EXTENSOES_VIDEO = [".mp4", ".webm", ".mov", ".ogv"];
 
+/** Onde moram os videos que a propria Kelly gravou e enviou. */
+export const PASTA_DOS_VIDEOS = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/videos/`;
+
+/**
+ * Se o link aponta para um video nosso, devolve o nome do arquivo la dentro.
+ *
+ * Serve para apagar o antigo quando ela troca o video de um exercicio — sem
+ * isso cada troca deixaria um arquivo morto ocupando espaco para sempre.
+ */
+export function arquivoDoVideoEnviado(
+  url: string | null | undefined,
+): string | null {
+  const limpo = url?.trim();
+  if (!limpo?.startsWith(PASTA_DOS_VIDEOS)) return null;
+  return decodeURIComponent(limpo.slice(PASTA_DOS_VIDEOS.length)) || null;
+}
+
 export function lerMidia(url: string | null | undefined): Midia {
   const limpo = url?.trim();
   if (!limpo) return { tipo: "vazio" };

@@ -108,7 +108,8 @@ export default async function Page() {
               </>,
               <>
                 Escolha um vídeo em que a execução esteja certa, copie o endereço
-                e cole no campo <B>Link da demonstração</B>.
+                e cole no campo <B>Link da demonstração</B>. Ou, se preferir usar
+                um vídeo seu, veja logo abaixo.
               </>,
               <>
                 A <strong>prévia aparece logo abaixo</strong>. Confira se abriu o
@@ -124,6 +125,39 @@ export default async function Page() {
               </>,
             ]}
           />
+          <Rotulo>Usar um vídeo gravado por você</Rotulo>
+          <p className="text-sm text-fumaca">
+            É o que ninguém mais vai ter: a execução do seu jeito, com a sua
+            correção. Dentro do exercício, embaixo do campo de link, tem o botão{" "}
+            <B>Enviar um vídeo do celular</B>.
+          </p>
+          <Lista
+            itens={[
+              <>
+                Grave o exercício de <strong>10 a 15 segundos</strong>, na
+                horizontal, mostrando o movimento inteiro — subida e descida.
+              </>,
+              <>
+                Toque em <B>Enviar um vídeo do celular</B> e escolha o vídeo na
+                galeria.
+              </>,
+              <>
+                Aparece uma barra com o quanto já subiu.{" "}
+                <strong>Não feche a tela até terminar.</strong> Se estiver fora
+                do Wi-Fi e demorar, dá para cancelar e refazer depois.
+              </>,
+              <>
+                Quando terminar, o vídeo aparece na prévia. Confira e clique em{" "}
+                <B>Salvar</B> — é o Salvar que prende o vídeo no exercício.
+              </>,
+            ]}
+          />
+          <Nota titulo="Se você grava no iPhone">
+            Entre em <B>Ajustes › Câmera › Formatos</B> e deixe em{" "}
+            <B>Mais Compatível</B>. No outro formato, o vídeo abre no seu iPhone
+            mas pode ficar preto no celular Android de alguns alunos — e você não
+            veria isso na prévia, porque no seu aparelho funciona.
+          </Nota>
           <Nota titulo="Comece pequeno">
             Não tente preencher tudo de uma vez. Faça os 20 ou 30 que você
             realmente usa e vá completando conforme precisar — exercício sem
