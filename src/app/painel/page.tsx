@@ -12,9 +12,30 @@ import {
 } from "@/lib/frequencia";
 import {
   emAbertoPorAluno,
+  nivelDaMensalidade,
   nomeDaCompetencia,
-  situacaoMensalidade,
+  ROTULO_NIVEL,
+  type Nivel,
 } from "@/lib/mensalidades";
+
+/** Mais grave primeiro: e a ordem em que ela precisa agir. */
+const ORDEM_NIVEL: Record<Nivel, number> = {
+  bloqueada: 0,
+  critica: 1,
+  conferir: 2,
+  atrasada: 3,
+  em_dia: 4,
+  paga: 5,
+};
+
+const COR_NIVEL: Record<Nivel, string> = {
+  bloqueada: "text-sangue-claro",
+  critica: "text-sangue-claro",
+  conferir: "text-amber-400",
+  atrasada: "text-amber-400",
+  em_dia: "text-fumaca",
+  paga: "text-fumaca",
+};
 
 export default async function Page() {
   const supabase = await createClient();
@@ -58,14 +79,19 @@ export default async function Page() {
   });
   const emDia = porAusencia.filter((aluno) => !sumidos.includes(aluno));
 
-  // mensalidade vencida, da mais atrasada para a menos
-  const devendo = alunos
+  // da mais grave para a menos: bloqueado, critico, atrasado, e comprovante
+  // esperando conferencia dela
+  const cobrancas = alunos
     .map((aluno) => ({
       aluno,
-      situacao: situacaoMensalidade(emAberto.get(aluno.id)),
+      mensalidade: emAberto.get(aluno.id),
+      ...nivelDaMensalidade(emAberto.get(aluno.id)),
     }))
-    .filter((linha) => (linha.situacao?.diasDeAtraso ?? 0) > 0)
-    .sort((a, b) => b.situacao!.diasDeAtraso - a.situacao!.diasDeAtraso);
+    .filter((linha) => linha.nivel !== "em_dia" && linha.nivel !== "paga")
+    .sort((a, b) => ORDEM_NIVEL[a.nivel] - ORDEM_NIVEL[b.nivel] || b.diasDeAtraso - a.diasDeAtraso);
+
+  const bloqueados = cobrancas.filter((c) => c.nivel === "bloqueada").length;
+  const aConferir = cobrancas.filter((c) => c.nivel === "conferir").length;
 
   return (
     <div className="space-y-6">
@@ -116,10 +142,18 @@ export default async function Page() {
         )}
       </Cartao>
 
-      {devendo.length > 0 && (
-        <Cartao titulo="Mensalidade em atraso">
+      {cobrancas.length > 0 && (
+        <Cartao
+          titulo={
+            bloqueados > 0
+              ? `Mensalidade — ${bloqueados} com acesso pausado`
+              : aConferir > 0
+                ? "Mensalidade — comprovante para conferir"
+                : "Mensalidade"
+          }
+        >
           <ul className="divide-y divide-borda">
-            {devendo.map(({ aluno, situacao: sit }) => (
+            {cobrancas.map(({ aluno, mensalidade, nivel, diasDeAtraso }) => (
               <li key={aluno.id}>
                 <Link
                   href={`/painel/alunos/${aluno.id}`}
@@ -130,15 +164,13 @@ export default async function Page() {
                       {aluno.nome}
                     </span>
                     <span className="text-xs text-fumaca">
-                      {nomeDaCompetencia(emAberto.get(aluno.id)!.competencia)} ·
-                      R${" "}
-                      {Number(emAberto.get(aluno.id)!.valor)
-                        .toFixed(2)
-                        .replace(".", ",")}
+                      {nomeDaCompetencia(mensalidade!.competencia)} · R${" "}
+                      {Number(mensalidade!.valor).toFixed(2).replace(".", ",")}
+                      {diasDeAtraso > 0 && ` · ${diasDeAtraso} dias`}
                     </span>
                   </span>
-                  <span className={`shrink-0 text-sm ${TOM_CLASSE[sit!.tom]}`}>
-                    {sit!.texto}
+                  <span className={`shrink-0 text-sm ${COR_NIVEL[nivel]}`}>
+                    {ROTULO_NIVEL[nivel]}
                   </span>
                 </Link>
               </li>

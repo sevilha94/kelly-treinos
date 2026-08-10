@@ -420,23 +420,48 @@ export default async function Page() {
 
         <Ficha id="mensalidade" titulo="Mensalidade">
           <p>
-            Em <B>Valor e vencimento</B>, defina quanto ele paga e em que dia
-            vence. Depois é só clicar em <B>Lançar a mensalidade</B> do mês e,
-            quando o Pix cair, em <B>Marcar paga</B>.
+            O valor e o dia do vencimento você já preenche no{" "}
+            <B>cadastro do aluno</B>. Depois é só clicar em{" "}
+            <B>Lançar a mensalidade</B> do mês.
           </p>
+          <Rotulo>O aluno avisa que pagou</Rotulo>
           <p>
-            Quem estiver atrasado aparece no painel, do mais atrasado para o
-            menos. O aluno vê um aviso discreto só depois do vencimento.
+            Quando existe mensalidade em aberto, aparece no link dele um botão{" "}
+            <B>Já paguei — enviar comprovante</B>. Ele anexa o print do Pix ali
+            mesmo. Você vê <B>Ver comprovante</B> no painel, confere e clica em{" "}
+            <B>Marcar paga</B>.
           </p>
+          <Rotulo>O que acontece se ele não pagar</Rotulo>
+          <ul className="space-y-2 text-sm">
+            <li className="flex items-baseline gap-3">
+              <span className="w-28 shrink-0 text-amber-400">1 a 4 dias</span>
+              <span>Aparece como “Atrasada” no seu painel.</span>
+            </li>
+            <li className="flex items-baseline gap-3">
+              <span className="w-28 shrink-0 text-sangue-claro">5 e 6 dias</span>
+              <span>Vira “Atraso crítico” e sobe para o topo da lista.</span>
+            </li>
+            <li className="flex items-baseline gap-3">
+              <span className="w-28 shrink-0 text-sangue-claro">7 dias</span>
+              <span>
+                O treino dele é pausado sozinho, até enviar o comprovante ou
+                você dar baixa.
+              </span>
+            </li>
+          </ul>
+          <Nota titulo="Enviar o comprovante já destrava">
+            No instante em que o aluno anexa o comprovante, o treino volta —
+            mesmo antes de você conferir. Ele fez a parte dele; travar por causa
+            da sua fila de conferência puniria a pessoa errada.
+          </Nota>
           <Nota titulo="O sistema não recebe dinheiro">
             Você continua cobrando por Pix como sempre fez. Aqui é só o controle,
             para você parar de guardar isso de cabeça.
           </Nota>
           <p className="text-sm text-fumaca">
-            Existe a opção de pausar o treino sozinho quando atrasa, mas ela vem{" "}
-            <strong>desligada</strong> de propósito: se você esquecer de marcar um
-            pagamento que entrou, o aluno perde o treino sem ter feito nada
-            errado.
+            O bloqueio automático em 7 dias vem <strong>ligado</strong>, e dá para
+            desligar por aluno em <B>Valor e vencimento</B>, junto com o número
+            de dias de tolerância.
           </p>
         </Ficha>
 

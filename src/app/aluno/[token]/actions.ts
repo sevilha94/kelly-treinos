@@ -135,6 +135,83 @@ export async function removerAssinatura(dados: {
     .eq("endpoint", dados.endpoint);
 }
 
+const TIPOS_ACEITOS = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "application/pdf",
+];
+const TAMANHO_MAXIMO = 6 * 1024 * 1024;
+
+export type EstadoComprovante = { erro?: string; enviado?: boolean };
+
+/**
+ * O aluno avisa que pagou e anexa o comprovante do Pix.
+ *
+ * Isso nao marca a mensalidade como paga — quem confere e a Kelly. Mas tira o
+ * aluno da regua de cobranca na hora: ele fez a parte dele, e travar o treino
+ * de quem pagou por causa da fila de conferencia dela puniria a pessoa errada.
+ */
+export async function enviarComprovante(
+  _anterior: EstadoComprovante,
+  formData: FormData,
+): Promise<EstadoComprovante> {
+  const token = String(formData.get("token") ?? "");
+  const contexto = await alunoDoToken(token);
+  if (!contexto) return { erro: "Não consegui identificar seu cadastro." };
+
+  const arquivo = formData.get("comprovante");
+  if (!(arquivo instanceof File) || arquivo.size === 0) {
+    return { erro: "Escolha o arquivo do comprovante." };
+  }
+  if (!TIPOS_ACEITOS.includes(arquivo.type)) {
+    return { erro: "Envie uma imagem (print) ou um PDF." };
+  }
+  if (arquivo.size > TAMANHO_MAXIMO) {
+    return { erro: "Arquivo muito grande. O limite é 6 MB." };
+  }
+
+  // pega a mensalidade em aberto mais antiga: e a que ele esta pagando
+  const { data: mensalidade } = await contexto.supabase
+    .from("mensalidade")
+    .select("id")
+    .eq("aluno_id", contexto.alunoId)
+    .is("pago_em", null)
+    .is("arquivado_em", null)
+    .order("vencimento")
+    .limit(1)
+    .maybeSingle();
+
+  if (!mensalidade) {
+    return { erro: "Você não tem mensalidade em aberto no momento." };
+  }
+
+  const extensao = arquivo.name.split(".").pop()?.toLowerCase() ?? "jpg";
+  const caminho = `${contexto.alunoId}/${mensalidade.id}-${Date.now()}.${extensao}`;
+
+  const { error: erroUpload } = await contexto.supabase.storage
+    .from("comprovantes")
+    .upload(caminho, arquivo, { contentType: arquivo.type, upsert: true });
+
+  if (erroUpload) {
+    console.error(`[kelly-treinos] upload do comprovante: ${erroUpload.message}`);
+    return { erro: "Não consegui receber o arquivo. Tente de novo." };
+  }
+
+  await contexto.supabase
+    .from("mensalidade")
+    .update({
+      comprovante_caminho: caminho,
+      enviado_em: new Date().toISOString(),
+      forma: "Pix",
+    })
+    .eq("id", mensalidade.id);
+
+  revalidatePath(`/aluno/${token}`);
+  return { enviado: true };
+}
+
 const PERCEPCOES = ["facil", "na_medida", "puxado"] as const;
 
 /** Como o treino de hoje foi para o aluno. E o que a Kelly nao tinha como saber. */

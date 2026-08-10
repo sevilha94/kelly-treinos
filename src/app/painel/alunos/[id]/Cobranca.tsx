@@ -1,13 +1,24 @@
 import { Cartao, Vazio } from "@/componentes/Cartao";
 import { BotaoAcao } from "@/componentes/BotaoAcao";
 import { alternarPagamento, gerarMensalidade, salvarCobranca } from "../actions";
-import { TOM_CLASSE } from "@/lib/frequencia";
+import { VerComprovante } from "./VerComprovante";
 import {
   competenciaAtual,
+  nivelDaMensalidade,
   nomeDaCompetencia,
-  situacaoMensalidade,
+  ROTULO_NIVEL,
   type Mensalidade,
+  type Nivel,
 } from "@/lib/mensalidades";
+
+const COR_NIVEL: Record<Nivel, string> = {
+  paga: "text-fumaca",
+  conferir: "text-amber-400",
+  em_dia: "text-fumaca",
+  atrasada: "text-amber-400",
+  critica: "text-sangue-claro",
+  bloqueada: "text-sangue-claro",
+};
 import { formataData } from "@/lib/tipos";
 
 const ENTRADA =
@@ -39,7 +50,7 @@ export function Cobranca({
       ) : (
         <ul className="divide-y divide-borda">
           {mensalidades.map((mensalidade) => {
-            const sit = situacaoMensalidade(mensalidade)!;
+            const { nivel } = nivelDaMensalidade(mensalidade);
             const paga = Boolean(mensalidade.pago_em);
 
             return (
@@ -58,9 +69,13 @@ export function Cobranca({
                   </span>
                 </span>
 
-                <span className={`text-sm ${TOM_CLASSE[sit.tom]}`}>
-                  {sit.texto}
+                <span className={`text-sm ${COR_NIVEL[nivel]}`}>
+                  {ROTULO_NIVEL[nivel]}
                 </span>
+
+                {mensalidade.comprovante_caminho && (
+                  <VerComprovante caminho={mensalidade.comprovante_caminho} />
+                )}
 
                 <form action={alternarPagamento}>
                   <input type="hidden" name="aluno_id" value={aluno.id} />

@@ -15,6 +15,7 @@ import { BotaoAcao } from "@/componentes/BotaoAcao";
 import { CronometroDescanso } from "./CronometroDescanso";
 import { Feedback } from "./Feedback";
 import { Lembretes } from "./Lembretes";
+import { Pagamento } from "./Pagamento";
 import { MidiaExercicio } from "@/componentes/MidiaExercicio";
 import { Marca } from "@/componentes/Marca";
 import { marcarExercicio, finalizarTreino } from "./actions";
@@ -22,7 +23,6 @@ import { marcarExercicio, finalizarTreino } from "./actions";
 import {
   deveBloquearPorAtraso,
   nomeDaCompetencia,
-  situacaoMensalidade,
   type Mensalidade,
 } from "@/lib/mensalidades";
 import {
@@ -334,7 +334,7 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
         })}
       </ul>
 
-      <AvisoDeMensalidade emAberto={emAberto} />
+      {emAberto && <Pagamento token={token} emAberto={emAberto} />}
 
       <Lembretes token={token} jaLigado={(lembretesRes.count ?? 0) > 0} />
 
@@ -392,21 +392,6 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
   );
 }
 
-/**
- * Aviso discreto de mensalidade. So aparece a partir do vencimento — antes
- * disso e cobranca antecipada, e nao e esse o papel da tela de treino.
- */
-function AvisoDeMensalidade({ emAberto }: { emAberto?: Mensalidade }) {
-  const sit = situacaoMensalidade(emAberto);
-  if (!sit || sit.diasDeAtraso === 0) return null;
-
-  return (
-    <p className="mx-5 mt-4 rounded-lg border border-sangue-escuro bg-sangue-escuro/10 px-3 py-2.5 text-sm leading-relaxed">
-      Mensalidade de {nomeDaCompetencia(emAberto!.competencia)} em aberto — fale
-      com a Kelly quando puder.
-    </p>
-  );
-}
 
 /**
  * As medidas da ultima avaliacao, com quanto mudou desde a anterior. Fica

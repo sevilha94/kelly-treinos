@@ -51,6 +51,22 @@ export function FormularioAluno({ aluno }: { aluno?: Aluno }) {
         valor={aluno?.objetivo ?? ""}
         placeholder="Hipertrofia e perda de gordura"
       />
+
+      <div className="grid grid-cols-2 gap-3">
+        <Campo
+          label="Mensalidade (R$)"
+          nome="valor_mensalidade"
+          valor={aluno?.valor_mensalidade ?? ""}
+          placeholder="250"
+        />
+        <Campo
+          label="Vence todo dia"
+          nome="dia_vencimento"
+          valor={aluno?.dia_vencimento ?? ""}
+          placeholder="10"
+          ajuda="De 1 a 28, combinado com ele."
+        />
+      </div>
       <Campo
         label="Observações"
         nome="observacoes"

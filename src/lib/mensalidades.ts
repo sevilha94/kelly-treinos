@@ -10,39 +10,53 @@ export type Mensalidade = {
   pago_em: string | null;
   forma: string | null;
   observacoes: string | null;
+  /** Caminho do comprovante no armazenamento; nunca uma URL publica. */
+  comprovante_caminho: string | null;
+  enviado_em: string | null;
 };
 
-export type SituacaoMensalidade = {
-  texto: string;
-  tom: "bom" | "atencao" | "alerta";
+/** Dias de atraso em que a cobranca muda de patamar. */
+export const DIAS_CRITICO = 5;
+export const DIAS_BLOQUEIO = 7;
+
+export type Nivel =
+  | "paga"
+  | "conferir"
+  | "em_dia"
+  | "atrasada"
+  | "critica"
+  | "bloqueada";
+
+export const ROTULO_NIVEL: Record<Nivel, string> = {
+  paga: "Paga",
+  conferir: "Comprovante para conferir",
+  em_dia: "Em dia",
+  atrasada: "Atrasada",
+  critica: "Atraso crítico",
+  bloqueada: "Acesso pausado",
+};
+
+/**
+ * Em que patamar a cobranca esta.
+ *
+ * Comprovante enviado tira o aluno da regua mesmo antes de a Kelly conferir:
+ * ele fez a parte dele, e travar o treino de quem pagou por causa da fila de
+ * conferencia dela seria punir a pessoa errada.
+ */
+export function nivelDaMensalidade(mensalidade: Mensalidade | undefined): {
+  nivel: Nivel;
   diasDeAtraso: number;
-};
+} {
+  if (!mensalidade) return { nivel: "em_dia", diasDeAtraso: 0 };
+  if (mensalidade.pago_em) return { nivel: "paga", diasDeAtraso: 0 };
 
-export function situacaoMensalidade(
-  mensalidade: Mensalidade | undefined,
-): SituacaoMensalidade | null {
-  if (!mensalidade) return null;
+  const atraso = Math.max(0, diasAtras(mensalidade.vencimento));
 
-  if (mensalidade.pago_em) {
-    return { texto: "Paga", tom: "bom", diasDeAtraso: 0 };
-  }
-
-  const atraso = diasAtras(mensalidade.vencimento);
-
-  if (atraso < 0) {
-    return {
-      texto: `Vence em ${Math.abs(atraso)} ${Math.abs(atraso) === 1 ? "dia" : "dias"}`,
-      tom: "bom",
-      diasDeAtraso: 0,
-    };
-  }
-  if (atraso === 0) return { texto: "Vence hoje", tom: "atencao", diasDeAtraso: 0 };
-
-  return {
-    texto: `${atraso} ${atraso === 1 ? "dia" : "dias"} em atraso`,
-    tom: atraso > 5 ? "alerta" : "atencao",
-    diasDeAtraso: atraso,
-  };
+  if (mensalidade.enviado_em) return { nivel: "conferir", diasDeAtraso: atraso };
+  if (atraso === 0) return { nivel: "em_dia", diasDeAtraso: 0 };
+  if (atraso >= DIAS_BLOQUEIO) return { nivel: "bloqueada", diasDeAtraso: atraso };
+  if (atraso >= DIAS_CRITICO) return { nivel: "critica", diasDeAtraso: atraso };
+  return { nivel: "atrasada", diasDeAtraso: atraso };
 }
 
 /** Primeiro dia do mes atual, no formato do banco. */
@@ -80,13 +94,22 @@ export async function emAbertoPorAluno(
 }
 
 /**
- * Se o aluno deve ficar sem ver o treino por atraso. So vale quando a Kelly
- * ligou o bloqueio automatico naquele aluno, e ainda respeita a tolerancia.
+ * Se o aluno deve ficar sem ver o treino por atraso.
+ *
+ * Tres saidas para ele evitar isso: pagar e a Kelly confirmar, anexar o
+ * comprovante, ou ela desligar o bloqueio naquele aluno. Enquanto houver
+ * comprovante enviado, o treino continua liberado mesmo sem confirmacao.
  */
 export function deveBloquearPorAtraso(
   aluno: { bloquear_por_atraso: boolean; dias_tolerancia: number },
   emAberto: Mensalidade | undefined,
 ): boolean {
   if (!aluno.bloquear_por_atraso || !emAberto) return false;
-  return diasAtras(emAberto.vencimento) > aluno.dias_tolerancia;
+  // paga nao deveria chegar aqui, ja que as consultas filtram por pago_em nulo
+  // — mas quem confia nisso deixa um aluno em dia sem treino no dia em que
+  // alguem mudar a consulta
+  if (emAberto.pago_em || emAberto.enviado_em) return false;
+  return (
+    diasAtras(emAberto.vencimento) >= (aluno.dias_tolerancia ?? DIAS_BLOQUEIO)
+  );
 }
