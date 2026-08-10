@@ -34,11 +34,11 @@ export function Pagamento({
 
   if (jaEnviou) {
     return (
+      // quem fala aqui e a Kelly, entao o texto vai no feminino. E so a
+      // confirmacao: contar que ela ainda vai conferir e processo interno, nao
+      // assunto do aluno
       <div className="mx-5 mt-4 rounded-lg border border-borda bg-grafite px-3 py-2.5">
-        <p className="text-sm">Comprovante recebido, obrigado!</p>
-        <p className="mt-0.5 text-xs text-fumaca">
-          A Kelly confere e dá baixa. Seu treino segue liberado normalmente.
-        </p>
+        <p className="text-sm">Comprovante recebido, obrigada!</p>
       </div>
     );
   }
