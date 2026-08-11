@@ -235,7 +235,8 @@ export default async function Page() {
               <>
                 Preencha o <B>Descanso (segundos)</B> e o aluno ganha um
                 cronômetro naquele exercício, para não ficar olhando o relógio
-                entre as séries.
+                entre as séries. Ele tem um anel que vai esvaziando, para o
+                aluno ver quanto falta de relance, sem precisar ler.
               </>,
               <>
                 Use <B>↑ subir</B> e <B>↓ descer</B> para deixar na ordem em que
@@ -321,6 +322,11 @@ export default async function Page() {
               </>,
               <>
                 O campo de carga e o botão <B>Fiz este</B>.
+              </>,
+              <>
+                Uma barra fina no topo que avança a cada exercício marcado. Ela
+                só aparece depois do primeiro — serve para ele sentir que está
+                chegando ao fim.
               </>,
               <>
                 <B>Finalizar treino de hoje</B> no fim — é o que faz contar como
