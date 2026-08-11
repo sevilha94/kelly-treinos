@@ -424,8 +424,7 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
               Treino concluído
             </p>
             <p className="text-sm text-fumaca">
-              Você finalizou às {horaDe(finalizadaEm)}. A Kelly já está vendo
-              aqui.
+              Você finalizou às {horaDe(finalizadaEm)}.
             </p>
 
             <Feedback
