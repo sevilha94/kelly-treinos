@@ -35,7 +35,7 @@ export default async function Page(
       >
         ‹ Voltar para {aluno.nome}
       </Link>
-      <h1 className="titulo-marca text-3xl">Histórico</h1>
+      <h1 className="titulo-pagina text-3xl">Histórico</h1>
 
       <Cartao titulo="Treinos por semana">
         <div className="px-4 py-4">

@@ -7,7 +7,7 @@ export default function Page() {
       <Link href="/painel/alunos" className="text-sm text-fumaca hover:text-gelo">
         ‹ Voltar para os alunos
       </Link>
-      <h1 className="titulo-marca text-3xl">Novo aluno</h1>
+      <h1 className="titulo-pagina text-3xl">Novo aluno</h1>
       <p className="text-sm text-fumaca">
         Os treinos A, B, C e D já são criados vazios. Depois é só escolher os
         exercícios de cada um.

@@ -26,7 +26,7 @@ export default async function Page(
       <Link href="/painel/exercicios" className="text-sm text-fumaca hover:text-gelo">
         ‹ Voltar para a biblioteca
       </Link>
-      <h1 className="titulo-marca text-3xl">Editar exercício</h1>
+      <h1 className="titulo-pagina text-3xl">Editar exercício</h1>
 
       <FormularioExercicio exercicio={data as Exercicio} />
 

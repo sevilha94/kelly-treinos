@@ -118,7 +118,7 @@ export default async function Page(props: PageProps<"/painel/alunos/[id]">) {
         ‹ Voltar para os alunos
       </Link>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="titulo-marca text-3xl">{aluno.nome}</h1>
+        <h1 className="titulo-pagina text-3xl">{aluno.nome}</h1>
         <Link
           href={`/painel/alunos/${aluno.id}/historico`}
           className="inline-flex h-10 items-center rounded-lg border border-borda px-4 text-xs font-semibold uppercase tracking-wider text-gelo hover:border-fumaca"

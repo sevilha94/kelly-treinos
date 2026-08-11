@@ -700,7 +700,7 @@ function Passo({
       className="scroll-mt-4 space-y-3 rounded-2xl border border-borda bg-carvao p-5"
     >
       <div className="flex items-baseline gap-3">
-        <span className="titulo-marca text-2xl leading-none text-sangue tabular-nums">
+        <span className="numero text-2xl leading-none text-sangue">
           {numero}
         </span>
         <h3 className="text-lg font-semibold">{titulo}</h3>

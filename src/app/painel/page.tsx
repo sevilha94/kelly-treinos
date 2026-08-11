@@ -331,7 +331,7 @@ function Abertura() {
         <span className="block text-[11px] uppercase tracking-[0.28em] text-fumaca">
           Kelly Jhuly · Personal trainer
         </span>
-        <h1 className="titulo-marca text-4xl leading-none">Painel</h1>
+        <h1 className="titulo-pagina text-4xl leading-none">Painel</h1>
       </div>
     </section>
   );
@@ -391,7 +391,7 @@ function Atalho({
         alerta ? "border-sangue-escuro" : "border-borda"
       }`}
     >
-      <span className="block titulo-marca text-4xl text-sangue">{numero}</span>
+      <span className="block numero text-4xl text-sangue">{numero}</span>
       <span className="text-sm uppercase tracking-wider text-fumaca">
         {rotulo}
       </span>

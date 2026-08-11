@@ -84,6 +84,19 @@ textarea:focus-visible {
   text-transform: uppercase;
 }
 
+/* Titulo de pagina do painel: a faixa vermelha do app do aluno reduzida a um
+   traco. Mesma assinatura, volume mais baixo — o painel e onde a Kelly passa
+   horas montando planilha, e faixa cheia em toda tela cansa a vista. */
+.titulo-pagina {
+  font-family: var(--font-condensada);
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  border-left: 3px solid var(--color-sangue);
+  padding-left: 0.625rem;
+}
+
 /* Numero que precisa ser lido de longe: contagem, serie x repeticao, ordem do
    exercicio. Condensado ocupa menos e ainda cresce, que e o que permite um
    numero grande sem empurrar o nome do exercicio para a linha de baixo. */

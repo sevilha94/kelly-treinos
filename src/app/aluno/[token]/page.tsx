@@ -242,7 +242,9 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
         <h1 className="titulo-marca text-[2rem] leading-[0.95] text-white">
           Treino {treino.letra}
         </h1>
-        <p className="text-sm uppercase tracking-[0.08em] text-white/90">
+        {/* branco cheio, e nao 90%: sobre a parte clara da faixa o branco
+            transparente cai para 4.39:1, abaixo do minimo legivel */}
+        <p className="text-sm uppercase tracking-[0.08em] text-white">
           {treino.titulo}
         </p>
       </header>

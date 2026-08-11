@@ -39,7 +39,7 @@ export default async function Page(props: PageProps<"/painel/exercicios">) {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="titulo-marca text-3xl">Biblioteca</h1>
+        <h1 className="titulo-pagina text-3xl">Biblioteca</h1>
         <Link
           href="/painel/exercicios/novo"
           className="inline-flex h-11 items-center rounded-lg bg-sangue px-4 text-sm font-semibold uppercase tracking-wider text-white hover:bg-sangue-claro"
