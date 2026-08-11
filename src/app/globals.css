@@ -58,6 +58,20 @@ textarea:focus-visible {
   box-shadow: 0 0 0 2px var(--color-sangue-claro);
 }
 
+/* Quem pediu menos movimento no proprio aparelho — por enjoo, vertigem ou
+   labirintite — recebe tudo instantaneo. Vale para o app inteiro, inclusive
+   para transicao escrita solta em qualquer tela. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* Titulos da marca: condensado, itálico, caixa alta — como na planilha */
 .titulo-marca {
   font-style: italic;

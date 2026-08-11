@@ -55,13 +55,15 @@ export function CronometroDescanso({ segundos }: { segundos: number }) {
         acabou ? "border-sangue bg-sangue-escuro/20" : "border-borda bg-grafite"
       }`}
     >
+      <Anel fracao={rodando ? restante / segundos : acabou ? 0 : 1} />
+
       <span className="text-[10px] uppercase tracking-widest text-fumaca">
         Descanso
       </span>
 
       <span
         aria-live={acabou ? "assertive" : "off"}
-        className={`flex-1 text-lg tabular-nums ${acabou ? "text-sangue-claro" : ""}`}
+        className={`flex-1 text-lg tabular-nums ${acabou ? "text-alerta" : ""}`}
       >
         {acabou ? "Pode ir!" : formataTempo(rodando ? restante : segundos)}
       </span>
@@ -78,6 +80,50 @@ export function CronometroDescanso({ segundos }: { segundos: number }) {
         {rodando ? "Parar" : acabou ? "De novo" : "Iniciar"}
       </button>
     </div>
+  );
+}
+
+const RAIO = 11;
+const VOLTA = 2 * Math.PI * RAIO;
+
+/**
+ * Anel que esvazia junto com a contagem.
+ *
+ * No meio da serie o aluno olha de relance, muitas vezes sem oculos e com o
+ * celular no chao: um arco encurtando se le mais rapido do que dois numeros.
+ * Nao substitui o tempo escrito, acompanha.
+ *
+ * Anda pela contagem, e nao por uma animacao propria de CSS, porque o navegador
+ * congela animacao com a tela apagada — e o descanso e justamente quando o
+ * telefone vai para o bolso. Assim ele volta mostrando a verdade.
+ */
+function Anel({ fracao }: { fracao: number }) {
+  return (
+    <svg
+      viewBox="0 0 28 28"
+      className="h-7 w-7 shrink-0 -rotate-90"
+      aria-hidden
+    >
+      <circle
+        cx="14"
+        cy="14"
+        r={RAIO}
+        fill="none"
+        strokeWidth="3"
+        className="stroke-borda"
+      />
+      <circle
+        cx="14"
+        cy="14"
+        r={RAIO}
+        fill="none"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeDasharray={VOLTA}
+        strokeDashoffset={VOLTA * (1 - Math.max(0, Math.min(1, fracao)))}
+        className="stroke-sangue transition-[stroke-dashoffset] duration-300 ease-linear motion-reduce:transition-none"
+      />
+    </svg>
   );
 }
 

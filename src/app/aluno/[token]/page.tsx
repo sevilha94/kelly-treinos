@@ -246,6 +246,28 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
           {feitos.length > 0 &&
             `${feitos.length} de ${treino.itens.length} concluídos hoje.`}
         </p>
+
+        {/* A barra e a mesma informacao da frase, mas legivel de relance entre
+            uma serie e outra — e o avanco dela e o que da a sensacao de estar
+            chegando ao fim. So aparece depois do primeiro exercicio: antes
+            disso seria uma barra vazia lembrando que ele nao comecou */}
+        {feitos.length > 0 && (
+          <div
+            className="mt-2.5 h-1 w-full overflow-hidden rounded-full bg-grafite"
+            role="progressbar"
+            aria-valuenow={feitos.length}
+            aria-valuemin={0}
+            aria-valuemax={treino.itens.length}
+            aria-label="Exercícios concluídos hoje"
+          >
+            <div
+              className="h-full rounded-full bg-sangue transition-[width] duration-500 ease-out motion-reduce:transition-none"
+              style={{
+                width: `${(feitos.length / treino.itens.length) * 100}%`,
+              }}
+            />
+          </div>
+        )}
       </header>
 
       <ul className="divide-y divide-borda border-y border-borda">
@@ -256,12 +278,17 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
           const ultima = marcas[0];
 
           return (
-            <li key={item.id} className={feito ? "bg-grafite/40" : undefined}>
+            <li
+              key={item.id}
+              className={`transition-colors duration-300 ease-out motion-reduce:transition-none ${
+                feito ? "bg-grafite/40" : ""
+              }`}
+            >
               <details>
                 <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4">
                   <span
                     aria-hidden
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-xs ${
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-xs transition-colors duration-300 ease-out motion-reduce:transition-none ${
                       feito
                         ? "border-sangue bg-sangue text-white"
                         : "border-borda text-transparent"
