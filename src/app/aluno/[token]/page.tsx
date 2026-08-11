@@ -268,8 +268,13 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
               aria-valuemax={treino.itens.length}
               aria-label="Exercícios concluídos hoje"
             >
+              {/* Ao fechar o ultimo exercicio a barra da dois pulsos de brilho.
+                  Sem isso o unico sinal de "acabou a lista" e a barra parar de
+                  crescer, que ninguem percebe olhando de relance. */}
               <div
-                className="h-full rounded-full bg-sangue transition-[width] duration-500 ease-out motion-reduce:transition-none"
+                className={`h-full rounded-full bg-sangue transition-[width] duration-500 ease-out motion-reduce:transition-none ${
+                  feitos.length === treino.itens.length ? "animate-encheu" : ""
+                }`}
                 style={{
                   width: `${(feitos.length / treino.itens.length) * 100}%`,
                 }}
@@ -414,7 +419,7 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
 
       <div className="px-5 py-6">
         {finalizadaEm ? (
-          <div className="space-y-3 rounded-xl border border-sangue bg-sangue-escuro/15 px-4 py-5 text-center">
+          <div className="animate-comemorar space-y-3 rounded-xl border border-sangue bg-sangue-escuro/15 px-4 py-5 text-center">
             <p className="titulo-marca text-2xl text-sangue-claro">
               Treino concluído
             </p>

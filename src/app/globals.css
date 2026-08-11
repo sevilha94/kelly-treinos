@@ -22,6 +22,59 @@
   --font-condensada: var(--font-titulo), system-ui, sans-serif;
 }
 
+/* Movimento.
+   A regra que guia o que tem aqui: no maximo um ou dois elementos animados por
+   tela. O app e usado de pe, no meio da serie, com pressa — animacao espalhada
+   vira ruido e ainda faz a tela parecer mais lenta do que e. Entao so entram os
+   momentos que mudam alguma coisa para quem esta treinando.
+
+   Nenhum destes precisa de guarda propria de motion-reduce: o bloco de
+   prefers-reduced-motion la embaixo zera a duracao de qualquer animacao do app. */
+@theme {
+  /* O cartao de treino concluido entrando. E o unico momento de premio do app:
+     a pessoa terminou. Sobe pouco e cresce pouco — comemoracao, nao fogos. */
+  --animate-comemorar: comemorar 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  /* A barra de progresso ao encher. Dois pulsos e para; brilho continuo com a
+     tela ligada o treino inteiro cansa e ainda gasta bateria. */
+  --animate-encheu: encheu 0.9s ease-out 2;
+
+  /* Os ultimos segundos do descanso. Serve para ser visto de canto de olho, com
+     o celular no chao — por isso escala, que se enxerga de longe, e nao cor. */
+  --animate-contagem: contagem 1s ease-in-out infinite;
+
+  @keyframes comemorar {
+    from {
+      opacity: 0;
+      transform: translateY(0.75rem) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes encheu {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 transparent;
+    }
+    50% {
+      box-shadow: 0 0 0.5rem 0.0625rem var(--color-sangue-claro);
+    }
+  }
+
+  @keyframes contagem {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.12);
+    }
+  }
+}
+
 html {
   color-scheme: dark;
 }

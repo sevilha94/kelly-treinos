@@ -59,9 +59,14 @@ export function CronometroDescanso({ segundos }: { segundos: number }) {
     >
       <Anel fracao={rodando ? restante / segundos : acabou ? 0 : 1} />
 
+      {/* Nos ultimos 5 segundos o numero pulsa, para o aluno voltar a posicao
+          antes de zerar em vez de descobrir depois. O celular costuma estar no
+          chao nessa hora: escala se enxerga de longe, cor nao. */}
       <span
         aria-live={acabou ? "assertive" : "off"}
-        className={`numero text-2xl leading-none ${acabou ? "text-alerta" : ""}`}
+        className={`numero text-2xl leading-none ${acabou ? "text-alerta" : ""} ${
+          rodando && restante <= 5 ? "animate-contagem" : ""
+        }`}
       >
         {acabou ? "Pode ir!" : formataTempo(rodando ? restante : segundos)}
       </span>
