@@ -380,10 +380,16 @@ export default async function Page() {
         <Ficha id="lembretes" titulo="Lembrete no celular do aluno">
           <p>
             No painel, em <B>Lembrete no celular dos alunos</B>, você escolhe um
-            horário. Todo dia, nesse horário, quem tem treino marcado na agenda
-            recebe um aviso no celular — e quem já treinou naquele dia não é
-            incomodado.
+            horário. Todo dia, a partir desse horário, quem tem treino marcado na
+            agenda recebe um aviso no celular — e quem já treinou naquele dia não
+            é incomodado. Sai uma vez por dia só.
           </p>
+          <Nota titulo="“A partir de”, e não “em ponto”">
+            O horário é a hora mais cedo em que o aviso pode sair, não um
+            despertador cravado. Se o servidor estiver ocupado naquele minuto, o
+            lembrete sai um pouco depois em vez de não sair. Atrasado ainda
+            serve; não existir, não.
+          </Nota>
           <p>
             Do lado do aluno, aparece no link dele a pergunta “Quer um lembrete
             no dia do seu treino?”. Ele toca em <B>Quero</B> e o celular pede a

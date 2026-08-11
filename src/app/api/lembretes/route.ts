@@ -44,11 +44,38 @@ export async function GET(request: Request) {
     .maybeSingle();
 
   const horaEscolhida = Number(config?.valor ?? 7);
-  if (horaLocal !== horaEscolhida) {
+
+  // "da hora escolhida em diante, uma vez por dia" — e nao "exatamente nesta
+  // hora".
+  //
+  // Exigir a hora cravada faz o lembrete depender de o agendador acordar dentro
+  // daquela hora especifica. Foi o que aconteceu: nenhum aluno recebeu nada
+  // durante dias porque o disparo acontecia ao meio-dia, e o horario escolhido
+  // era 7. Uma execucao perdida tambem custava o dia inteiro.
+  //
+  // Assim, se rodar as 7 ele sai as 7; se so rodar mais tarde, sai mais tarde.
+  // Atrasado ainda serve — nao existir, nao.
+  if (horaLocal < horaEscolhida) {
     return Response.json({
       enviados: 0,
       lancadas,
-      motivo: "fora do horário do lembrete",
+      motivo: "ainda antes do horário do lembrete",
+      horaLocal,
+      horaEscolhida,
+    });
+  }
+
+  const { data: marca } = await supabase
+    .from("configuracao")
+    .select("valor")
+    .eq("chave", "lembrete_enviado_em")
+    .maybeSingle();
+
+  if (marca?.valor === hojeLocal) {
+    return Response.json({
+      enviados: 0,
+      lancadas,
+      motivo: "os lembretes de hoje já saíram",
       horaLocal,
     });
   }
@@ -135,10 +162,24 @@ export async function GET(request: Request) {
   // resumo do dia para a Kelly, no mesmo horario dos lembretes
   const avisoDoDia = await resumoParaAKelly(supabase, hojeLocal);
 
+  // marca depois de enviar, e nao antes: se o envio quebrar no meio, a proxima
+  // execucao tenta de novo em vez de dar o dia por encerrado
+  await supabase
+    .from("configuracao")
+    .upsert(
+      {
+        chave: "lembrete_enviado_em",
+        valor: hojeLocal,
+        atualizado_em: new Date().toISOString(),
+      },
+      { onConflict: "chave" },
+    );
+
   return Response.json({
     enviados,
     lancadas,
     avisoDoDia,
+    horaLocal,
   });
 }
 
