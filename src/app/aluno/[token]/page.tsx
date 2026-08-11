@@ -235,47 +235,61 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
         })}
       </nav>
 
-      <header className="px-5 pb-4">
-        <h1 className="titulo-marca text-3xl leading-tight">
-          Treino {treino.letra} — {treino.titulo}
+      {/* A faixa vermelha ja era o elemento da marca nos cabecalhos de cartao.
+          Aqui ela vira o cabecalho do treino: e o que da a cara de planilha de
+          academia, que e de onde tudo isso saiu. */}
+      <header className="faixa px-5 py-3.5">
+        <h1 className="titulo-marca text-[2rem] leading-[0.95] text-white">
+          Treino {treino.letra}
         </h1>
-        <p className="text-sm text-fumaca">
-          {treino.id === treinoDeHoje
-            ? `Hoje é ${DIAS_SEMANA[hoje - 1].nome.toLowerCase()}, o dia deste treino.`
-            : "Toque em qualquer exercício para ver como executar."}{" "}
-          {feitos.length > 0 &&
-            `${feitos.length} de ${treino.itens.length} concluídos hoje.`}
+        <p className="text-sm uppercase tracking-[0.08em] text-white/90">
+          {treino.titulo}
         </p>
-
-        {/* A barra e a mesma informacao da frase, mas legivel de relance entre
-            uma serie e outra — e o avanco dela e o que da a sensacao de estar
-            chegando ao fim. So aparece depois do primeiro exercicio: antes
-            disso seria uma barra vazia lembrando que ele nao comecou */}
-        {feitos.length > 0 && (
-          <div
-            className="mt-2.5 h-1 w-full overflow-hidden rounded-full bg-grafite"
-            role="progressbar"
-            aria-valuenow={feitos.length}
-            aria-valuemin={0}
-            aria-valuemax={treino.itens.length}
-            aria-label="Exercícios concluídos hoje"
-          >
-            <div
-              className="h-full rounded-full bg-sangue transition-[width] duration-500 ease-out motion-reduce:transition-none"
-              style={{
-                width: `${(feitos.length / treino.itens.length) * 100}%`,
-              }}
-            />
-          </div>
-        )}
       </header>
 
+      <div className="px-5 py-3.5">
+        {/* O numero grande e a barra dizem a mesma coisa que a frase, so que de
+            relance — entre uma serie e outra ninguem le frase */}
+        {feitos.length > 0 ? (
+          <div className="flex items-center gap-2.5">
+            <span className="numero text-3xl leading-none">
+              {feitos.length}
+            </span>
+            <span className="text-xs uppercase tracking-wider text-fumaca">
+              de {treino.itens.length} feitos
+            </span>
+            <div
+              className="ml-1 h-1 flex-1 overflow-hidden rounded-full bg-grafite"
+              role="progressbar"
+              aria-valuenow={feitos.length}
+              aria-valuemin={0}
+              aria-valuemax={treino.itens.length}
+              aria-label="Exercícios concluídos hoje"
+            >
+              <div
+                className="h-full rounded-full bg-sangue transition-[width] duration-500 ease-out motion-reduce:transition-none"
+                style={{
+                  width: `${(feitos.length / treino.itens.length) * 100}%`,
+                }}
+              />
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-fumaca">
+            {treino.id === treinoDeHoje
+              ? `Hoje é ${DIAS_SEMANA[hoje - 1].nome.toLowerCase()}, o dia deste treino.`
+              : "Toque em qualquer exercício para ver como executar."}
+          </p>
+        )}
+      </div>
+
       <ul className="divide-y divide-borda border-y border-borda">
-        {treino.itens.map((item) => {
+        {treino.itens.map((item, indice) => {
           const marcacao = marcacoes.get(item.id);
           const feito = marcacao?.feito ?? false;
           const marcas = historico.get(item.id) ?? [];
           const ultima = marcas[0];
+          const ordem = indice + 1;
 
           return (
             <li
@@ -284,30 +298,44 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
                 feito ? "bg-grafite/40" : ""
               }`}
             >
-              <details>
-                <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4">
+              <details className="group">
+                {/* A barra vermelha na lateral marca o que ainda falta; ela
+                    apaga quando o exercicio e feito, entao o que sobra aceso na
+                    tela e exatamente o que resta fazer */}
+                <summary
+                  className={`flex cursor-pointer list-none items-center gap-3 border-l-[3px] py-3.5 pl-4 pr-5 transition-colors duration-300 ease-out motion-reduce:transition-none ${
+                    feito ? "border-borda" : "border-sangue"
+                  }`}
+                >
                   <span
                     aria-hidden
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-xs transition-colors duration-300 ease-out motion-reduce:transition-none ${
-                      feito
-                        ? "border-sangue bg-sangue text-white"
-                        : "border-borda text-transparent"
+                    className={`numero w-6 shrink-0 text-lg leading-none transition-colors duration-300 ease-out motion-reduce:transition-none ${
+                      feito ? "text-borda" : "text-sangue"
                     }`}
                   >
-                    ✓
+                    {String(ordem).padStart(2, "0")}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span
-                      className={`block text-base leading-snug ${feito ? "text-fumaca line-through" : ""}`}
+                      className={`block text-[15px] font-medium leading-snug ${feito ? "text-fumaca line-through" : ""}`}
                     >
                       {nomeExibido(item)}
                     </span>
                     <span className="text-xs text-fumaca">
-                      {item.series} séries · {item.repeticoes} repetições
-                      {ultima && ` · última: ${formataCarga(ultima.carga)} kg`}
+                      {ultima
+                        ? `última: ${formataCarga(ultima.carga)} kg`
+                        : "sem carga registrada"}
                     </span>
                   </span>
-                  <span aria-hidden className="text-lg text-sangue">
+                  <span
+                    className={`numero shrink-0 text-lg leading-none ${feito ? "text-fumaca" : ""}`}
+                  >
+                    {item.series}×{item.repeticoes}
+                  </span>
+                  <span
+                    aria-hidden
+                    className="text-sangue transition-transform duration-200 group-open:rotate-90 motion-reduce:transition-none"
+                  >
                     ▸
                   </span>
                 </summary>
@@ -419,7 +447,7 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
             <input type="hidden" name="treino_id" value={treino.id} />
             <BotaoAcao
               carregando="Finalizando..."
-              className="h-12 w-full rounded-xl text-sm font-bold tracking-widest"
+              className="titulo-marca h-14 w-full rounded-none text-xl tracking-[0.03em]"
             >
               Finalizar treino de hoje
             </BotaoAcao>

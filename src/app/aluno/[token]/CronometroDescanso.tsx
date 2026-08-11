@@ -51,21 +51,23 @@ export function CronometroDescanso({ segundos }: { segundos: number }) {
 
   return (
     <div
-      className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 ${
-        acabou ? "border-sangue bg-sangue-escuro/20" : "border-borda bg-grafite"
+      className={`flex items-center gap-3 border-l-[3px] py-2.5 pl-3 pr-2.5 transition-colors duration-300 motion-reduce:transition-none ${
+        acabou
+          ? "border-alerta bg-sangue-escuro/20"
+          : "border-sangue bg-carvao"
       }`}
     >
       <Anel fracao={rodando ? restante / segundos : acabou ? 0 : 1} />
 
-      <span className="text-[10px] uppercase tracking-widest text-fumaca">
-        Descanso
-      </span>
-
       <span
         aria-live={acabou ? "assertive" : "off"}
-        className={`flex-1 text-lg tabular-nums ${acabou ? "text-alerta" : ""}`}
+        className={`numero text-2xl leading-none ${acabou ? "text-alerta" : ""}`}
       >
         {acabou ? "Pode ir!" : formataTempo(rodando ? restante : segundos)}
+      </span>
+
+      <span className="flex-1 text-[10px] uppercase tracking-widest text-fumaca">
+        Descanso
       </span>
 
       <button
