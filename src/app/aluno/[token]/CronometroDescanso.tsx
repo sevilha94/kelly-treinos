@@ -69,7 +69,7 @@ export function CronometroDescanso({ segundos }: { segundos: number }) {
       <button
         type="button"
         onClick={rodando ? parar : comecar}
-        className={`h-9 rounded-lg px-4 text-xs font-semibold uppercase tracking-wider ${
+        className={`h-11 rounded-lg px-4 text-xs font-semibold uppercase tracking-wider ${
           rodando
             ? "border border-borda text-fumaca"
             : "bg-sangue text-white"

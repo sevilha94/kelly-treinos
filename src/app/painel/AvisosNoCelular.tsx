@@ -86,7 +86,7 @@ export function AvisosNoCelular({ jaLigado }: { jaLigado: boolean }) {
         {estado === "ligado" ? (
           <button
             onClick={desligar}
-            className="h-9 rounded-lg border border-borda px-3 text-xs uppercase tracking-wider text-gelo hover:border-fumaca"
+            className="h-11 rounded-lg border border-borda px-3 text-xs uppercase tracking-wider text-gelo hover:border-fumaca"
           >
             Desligar avisos
           </button>
@@ -104,7 +104,7 @@ export function AvisosNoCelular({ jaLigado }: { jaLigado: boolean }) {
           <button
             onClick={ligar}
             disabled={estado === "pedindo"}
-            className="h-9 rounded-lg bg-sangue px-4 text-xs font-semibold uppercase tracking-wider text-white disabled:opacity-60"
+            className="h-11 rounded-lg bg-sangue px-4 text-xs font-semibold uppercase tracking-wider text-white disabled:opacity-60"
           >
             {estado === "pedindo" ? "Ligando..." : "Ligar avisos"}
           </button>

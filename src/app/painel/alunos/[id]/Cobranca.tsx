@@ -77,7 +77,7 @@ export function Cobranca({
                     href={`/painel/comprovante/${mensalidade.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex h-9 shrink-0 items-center rounded-lg border border-borda px-3 text-xs uppercase tracking-wider text-gelo hover:border-fumaca"
+                    className="inline-flex h-11 shrink-0 items-center rounded-lg border border-borda px-3 text-xs uppercase tracking-wider text-gelo hover:border-fumaca"
                   >
                     Ver comprovante
                   </a>

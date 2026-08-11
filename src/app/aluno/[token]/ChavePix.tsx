@@ -35,7 +35,7 @@ export function ChavePix({
             setCopiado(true);
             setTimeout(() => setCopiado(false), 2000);
           }}
-          className="h-9 shrink-0 rounded-lg bg-sangue px-3 text-xs font-semibold uppercase tracking-wider text-white"
+          className="h-11 shrink-0 rounded-lg bg-sangue px-3 text-xs font-semibold uppercase tracking-wider text-white"
         >
           {copiado ? "Copiado!" : "Copiar"}
         </button>

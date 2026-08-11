@@ -112,7 +112,7 @@ export function Lembretes({
           <button
             onClick={ligar}
             disabled={estado === "pedindo"}
-            className="h-9 shrink-0 rounded-lg bg-sangue px-4 text-xs font-semibold uppercase tracking-wider text-white disabled:opacity-60"
+            className="h-11 shrink-0 rounded-lg bg-sangue px-4 text-xs font-semibold uppercase tracking-wider text-white disabled:opacity-60"
           >
             {estado === "pedindo" ? "Ligando..." : "Quero"}
           </button>
