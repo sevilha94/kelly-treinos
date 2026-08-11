@@ -91,12 +91,12 @@ export function AvisosNoCelular({ jaLigado }: { jaLigado: boolean }) {
             Desligar avisos
           </button>
         ) : estado === "negado" ? (
-          <p className="text-sm text-sangue-claro">
+          <p className="text-sm text-alerta">
             As notificações estão bloqueadas para este site. Libere nas
             configurações do navegador e toque de novo.
           </p>
         ) : estado === "sem-suporte" ? (
-          <p className="text-sm text-sangue-claro">
+          <p className="text-sm text-alerta">
             Este navegador não aceita avisos. No iPhone, adicione o painel à
             tela de início e abra por lá.
           </p>
@@ -110,7 +110,7 @@ export function AvisosNoCelular({ jaLigado }: { jaLigado: boolean }) {
           </button>
         )}
 
-        {erro && <p className="text-sm text-sangue-claro">{erro}</p>}
+        {erro && <p className="text-sm text-alerta">{erro}</p>}
 
         <p className="text-xs text-fumaca">
           Vale por aparelho. Se você usa celular e computador, ligue nos dois.

@@ -70,7 +70,7 @@ export function FormularioExercicio({
             <button
               type="button"
               onClick={() => setMidiaUrl("")}
-              className="shrink-0 text-xs uppercase tracking-wider text-fumaca underline"
+              className="inline-flex min-h-11 shrink-0 items-center text-xs uppercase tracking-wider text-fumaca underline"
             >
               Trocar
             </button>
@@ -103,7 +103,7 @@ export function FormularioExercicio({
               href={buscaNoYoutube}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-10 items-center rounded-lg border border-borda px-4 text-xs font-semibold uppercase tracking-wider text-gelo hover:border-fumaca"
+              className="inline-flex h-11 items-center rounded-lg border border-borda px-4 text-xs font-semibold uppercase tracking-wider text-gelo hover:border-fumaca"
             >
               Procurar “{nome.trim()}” no YouTube
             </a>
@@ -136,7 +136,7 @@ export function FormularioExercicio({
         placeholder="Desça a barra até a linha do peito e não trave o cotovelo lá em cima."
       />
 
-      {estado.erro && <p className="text-sm text-sangue-claro">{estado.erro}</p>}
+      {estado.erro && <p className="text-sm text-alerta">{estado.erro}</p>}
 
       <Botao type="submit" disabled={pendente} className="w-full">
         {pendente ? "Salvando..." : exercicio ? "Salvar alterações" : "Adicionar à biblioteca"}

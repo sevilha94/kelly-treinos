@@ -61,7 +61,7 @@ export function Pagamento({
           {formataData(emAberto.vencimento)}
         </p>
         {diasDeAtraso > 0 && (
-          <p className="mt-0.5 text-xs text-sangue-claro">
+          <p className="mt-0.5 text-xs text-alerta">
             {diasDeAtraso === 1 ? "1 dia" : `${diasDeAtraso} dias`} em atraso.
             Envie o comprovante para continuar treinando.
           </p>
@@ -79,11 +79,11 @@ export function Pagamento({
           name="comprovante"
           accept="image/*,application/pdf"
           required
-          className="w-full text-sm text-fumaca file:mr-3 file:rounded-lg file:border-0 file:bg-grafite file:px-3 file:py-2 file:text-xs file:uppercase file:tracking-wider file:text-gelo"
+          className="w-full min-h-11 text-sm text-fumaca file:mr-3 file:h-11 file:rounded-lg file:border-0 file:bg-grafite file:px-4 file:text-xs file:uppercase file:tracking-wider file:text-gelo"
         />
       </label>
 
-      {estado.erro && <p className="text-sm text-sangue-claro">{estado.erro}</p>}
+      {estado.erro && <p className="text-sm text-alerta">{estado.erro}</p>}
 
       <BotaoAcao carregando="Enviando..." className="h-10 w-full">
         Já paguei — enviar comprovante

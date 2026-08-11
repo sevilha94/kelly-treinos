@@ -5,14 +5,16 @@ import type { ReactNode } from "react";
 
 type Variante = "principal" | "secundario" | "perigo" | "texto";
 
+// `min-h-11` e nao `h-11`: garante os 44px que o dedo precisa sem atropelar as
+// telas que ja pedem uma altura maior no className
 const ESTILO: Record<Variante, string> = {
   principal:
-    "h-9 rounded-lg bg-sangue px-4 text-xs font-semibold uppercase tracking-wider text-white hover:bg-sangue-claro",
+    "min-h-11 rounded-lg bg-sangue px-4 text-xs font-semibold uppercase tracking-wider text-white hover:bg-sangue-claro",
   secundario:
-    "h-9 rounded-lg border border-borda px-3 text-xs uppercase tracking-wider text-gelo hover:border-fumaca",
+    "min-h-11 rounded-lg border border-borda px-3 text-xs uppercase tracking-wider text-gelo hover:border-fumaca",
   perigo:
-    "h-9 rounded-lg px-3 text-xs uppercase tracking-wider text-fumaca hover:text-sangue-claro",
-  texto: "text-sm text-fumaca hover:text-sangue-claro",
+    "min-h-11 rounded-lg px-3 text-xs uppercase tracking-wider text-fumaca hover:text-sangue-claro",
+  texto: "min-h-11 text-sm text-fumaca hover:text-sangue-claro",
 };
 
 /**

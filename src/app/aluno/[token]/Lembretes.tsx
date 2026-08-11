@@ -119,7 +119,7 @@ export function Lembretes({
         </div>
       )}
 
-      {erro && <p className="mt-2 text-sm text-sangue-claro">{erro}</p>}
+      {erro && <p className="mt-2 text-sm text-alerta">{erro}</p>}
     </div>
   );
 }

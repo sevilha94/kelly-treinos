@@ -16,12 +16,20 @@ export function FormularioAluno({ aluno }: { aluno?: Aluno }) {
     <form action={acao} className="space-y-4">
       {aluno && <input type="hidden" name="id" value={aluno.id} />}
 
-      <Campo label="Nome" nome="nome" valor={aluno?.nome} obrigatorio />
+      <Campo
+        label="Nome"
+        nome="nome"
+        valor={aluno?.nome}
+        autoCompletar="name"
+        obrigatorio
+      />
       <Campo
         label="WhatsApp"
         nome="telefone"
         valor={aluno?.telefone ?? ""}
         placeholder="(12) 99999-9999"
+        modo="tel"
+        autoCompletar="tel"
       />
 
       <div className="grid grid-cols-2 gap-3">
@@ -36,6 +44,7 @@ export function FormularioAluno({ aluno }: { aluno?: Aluno }) {
           nome="peso_kg"
           valor={aluno?.peso_kg ?? ""}
           placeholder="73"
+          modo="decimal"
         />
       </div>
 
@@ -44,6 +53,7 @@ export function FormularioAluno({ aluno }: { aluno?: Aluno }) {
         nome="altura_cm"
         valor={aluno?.altura_cm ?? ""}
         placeholder="171"
+        modo="numeric"
       />
       <Campo
         label="Objetivo"
@@ -58,12 +68,14 @@ export function FormularioAluno({ aluno }: { aluno?: Aluno }) {
           nome="valor_mensalidade"
           valor={aluno?.valor_mensalidade ?? ""}
           placeholder="250"
+          modo="decimal"
         />
         <Campo
           label="Vence todo dia"
           nome="dia_vencimento"
           valor={aluno?.dia_vencimento ?? ""}
           placeholder="10"
+          modo="numeric"
           ajuda="De 1 a 28, combinado com ele."
         />
       </div>
@@ -75,7 +87,7 @@ export function FormularioAluno({ aluno }: { aluno?: Aluno }) {
         placeholder="Lesão no ombro direito, evitar desenvolvimento acima da cabeça."
       />
 
-      {estado.erro && <p className="text-sm text-sangue-claro">{estado.erro}</p>}
+      {estado.erro && <p className="text-sm text-alerta">{estado.erro}</p>}
 
       <Botao type="submit" disabled={pendente} className="w-full">
         {pendente ? "Salvando..." : aluno ? "Salvar alterações" : "Cadastrar aluno"}

@@ -20,7 +20,7 @@ export function FormularioLogin() {
       <Campo label="Senha" nome="senha" tipo="password" obrigatorio />
 
       {estado.erro && (
-        <p className="text-sm text-sangue-claro">{estado.erro}</p>
+        <p className="text-sm text-alerta">{estado.erro}</p>
       )}
 
       <Botao type="submit" disabled={pendente} className="w-full">

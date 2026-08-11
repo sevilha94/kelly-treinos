@@ -8,6 +8,9 @@ type Props = {
   ajuda?: string;
   multilinha?: boolean;
   opcoes?: readonly string[];
+  /** Qual teclado o celular abre. Sem isso, ela digita numero com as letras. */
+  modo?: "numeric" | "decimal" | "tel";
+  autoCompletar?: string;
 };
 
 const CLASSE_ENTRADA =
@@ -23,6 +26,8 @@ export function Campo({
   ajuda,
   multilinha,
   opcoes,
+  modo,
+  autoCompletar,
 }: Props) {
   return (
     <label className="block">
@@ -57,6 +62,8 @@ export function Campo({
         <input
           name={nome}
           type={tipo}
+          inputMode={modo}
+          autoComplete={autoCompletar}
           defaultValue={valor}
           placeholder={placeholder}
           required={obrigatorio}

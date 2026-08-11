@@ -119,7 +119,7 @@ export function EnvioDeVideo({
         <button
           type="button"
           onClick={() => emCurso.current?.abort()}
-          className="text-xs uppercase tracking-wider text-fumaca underline"
+          className="inline-flex min-h-11 items-center text-xs uppercase tracking-wider text-fumaca underline"
         >
           Cancelar envio
         </button>
@@ -138,7 +138,7 @@ export function EnvioDeVideo({
           className="sr-only"
         />
       </label>
-      {erro && <p className="text-sm text-sangue-claro">{erro}</p>}
+      {erro && <p className="text-sm text-alerta">{erro}</p>}
       <p className="text-xs text-fumaca">
         Grave de 10 a 15 segundos, na horizontal, mostrando o movimento inteiro.
         Até {LIMITE_MB} MB.

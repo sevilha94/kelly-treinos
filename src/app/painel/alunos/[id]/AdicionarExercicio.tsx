@@ -89,7 +89,12 @@ export function AdicionarExercicio({
         <span className="mb-1 block text-[10px] uppercase tracking-widest text-fumaca">
           Séries
         </span>
-        <input name="series" defaultValue="4" className={ENTRADA} />
+        <input
+          name="series"
+          inputMode="numeric"
+          defaultValue="4"
+          className={ENTRADA}
+        />
       </label>
 
       <label className="w-20">

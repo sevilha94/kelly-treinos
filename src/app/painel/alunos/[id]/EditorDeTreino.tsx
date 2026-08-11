@@ -107,6 +107,7 @@ export function EditorDeTreino({
                       </span>
                       <input
                         name="series"
+                        inputMode="numeric"
                         defaultValue={item.series}
                         className={ENTRADA}
                       />
@@ -115,6 +116,9 @@ export function EditorDeTreino({
                       <span className="mb-1 block text-[10px] uppercase tracking-widest text-fumaca">
                         Repetições
                       </span>
+                      {/* teclado normal de proposito: aqui ela escreve coisas
+                          como "15´MIN", "ate a falha" ou "8-12", e o teclado
+                          numerico do celular esconderia letras e hifen */}
                       <input
                         name="repeticoes"
                         defaultValue={item.repeticoes}

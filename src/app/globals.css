@@ -11,6 +11,10 @@
   --color-sangue: #d61f26;
   --color-sangue-claro: #f0353c;
   --color-sangue-escuro: #8f1116;
+  /* Vermelho so para texto de aviso e de erro. O sangue-claro fica em 4.13:1
+     sobre o grafite dos formularios, abaixo do minimo legivel; este passa nos
+     tres fundos do app. Nao usar como cor decorativa, senao a marca desbota. */
+  --color-alerta: #ff5c62;
 
   --font-sans: var(--font-titulo), system-ui, sans-serif;
 }
@@ -23,6 +27,35 @@ body {
   background: var(--color-preto);
   color: var(--color-gelo);
   -webkit-tap-highlight-color: transparent;
+  /* o celular segura ~300ms em cada toque esperando um possivel duplo toque
+     para dar zoom. Sem isso, o app inteiro parece um pouco lento */
+  touch-action: manipulation;
+}
+
+/* Resposta imediata ao toque.
+   O tap-highlight do navegador esta desligado ali em cima, e nenhum botao tinha
+   estado de apertado: no celular a pessoa tocava e a tela nao reagia ate a acao
+   terminar. `hover` nao resolve — dedo nao passa por cima antes de clicar. */
+button:not(:disabled):active,
+summary:active,
+a:active {
+  opacity: 0.65;
+}
+
+/* Foco visivel para quem usa teclado. Em campo vai por sombra, e nao por
+   outline, porque as classes de campo ja zeram o outline no foco. */
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--color-sangue-claro);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-sangue-claro);
 }
 
 /* Titulos da marca: condensado, itálico, caixa alta — como na planilha */
