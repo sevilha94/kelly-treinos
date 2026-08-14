@@ -227,11 +227,17 @@ export async function adicionarItem(formData: FormData) {
 
   if (!exercicioId) return;
 
-  const { count } = await supabase
+  // a posicao vem do maior numero em uso, e nao da contagem: removendo um
+  // exercicio a contagem cai, e o proximo a entrar receberia um numero que ja
+  // existe. Dois empatados na mesma posicao travavam o subir/descer
+  const { data: ultimo } = await supabase
     .from("treino_exercicio")
-    .select("id", { count: "exact", head: true })
+    .select("ordem")
     .eq("treino_id", treinoId)
-    .is("arquivado_em", null);
+    .is("arquivado_em", null)
+    .order("ordem", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   const { error } = await supabase.from("treino_exercicio").insert({
     treino_id: treinoId,
@@ -239,7 +245,7 @@ export async function adicionarItem(formData: FormData) {
     series: texto(formData, "series") ?? "4",
     repeticoes: texto(formData, "repeticoes") ?? "12",
     descanso_segundos: segundosDeDescanso(formData),
-    ordem: count ?? 0,
+    ordem: (ultimo?.ordem ?? -1) + 1,
   });
   conferir("adicionarItem", error);
 
@@ -286,32 +292,48 @@ export async function moverItem(formData: FormData) {
 
   const { data: item } = await supabase
     .from("treino_exercicio")
-    .select("id, treino_id, ordem")
+    .select("treino_id")
     .eq("id", itemId)
-    .single();
+    .maybeSingle();
 
   if (!item) return;
 
-  const { data: vizinho } = await supabase
+  // Le a lista inteira e renumera de 0 em diante, em vez de trocar o numero com
+  // o vizinho de cima ou de baixo.
+  //
+  // A troca dependia de existir alguem com numero estritamente maior ou menor.
+  // Com dois exercicios empatados na mesma posicao — o que acontecia ao
+  // adicionar depois de remover — nao havia vizinho, e o botao nao fazia nada
+  // nem avisava. Renumerando, empate e buraco somem no primeiro uso.
+  const { data: lista } = await supabase
     .from("treino_exercicio")
     .select("id, ordem")
     .eq("treino_id", item.treino_id)
     .is("arquivado_em", null)
-    .order("ordem", { ascending: direcao !== "cima" })
-    .filter("ordem", direcao === "cima" ? "lt" : "gt", item.ordem)
-    .limit(1)
-    .maybeSingle();
+    .order("ordem")
+    .order("id");
 
-  if (!vizinho) return;
+  if (!lista?.length) return;
 
-  await supabase
-    .from("treino_exercicio")
-    .update({ ordem: vizinho.ordem })
-    .eq("id", item.id);
-  await supabase
-    .from("treino_exercicio")
-    .update({ ordem: item.ordem })
-    .eq("id", vizinho.id);
+  const de = lista.findIndex((linha) => linha.id === itemId);
+  const para = direcao === "cima" ? de - 1 : de + 1;
+  if (de < 0 || para < 0 || para >= lista.length) return;
+
+  const [movido] = lista.splice(de, 1);
+  lista.splice(para, 0, movido);
+
+  await Promise.all(
+    lista.flatMap((linha, posicao) =>
+      linha.ordem === posicao
+        ? []
+        : [
+            supabase
+              .from("treino_exercicio")
+              .update({ ordem: posicao })
+              .eq("id", linha.id),
+          ],
+    ),
+  );
 
   revalidatePath(`/painel/alunos/${alunoId}`);
 }
