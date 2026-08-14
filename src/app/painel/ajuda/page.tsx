@@ -238,12 +238,36 @@ export default async function Page() {
                 entre as séries. Ele tem um anel que vai esvaziando, para o
                 aluno ver quanto falta de relance, sem precisar ler.
               </>,
+            ]}
+          />
+          <Rotulo>Mudar a ordem dos exercícios</Rotulo>
+          <p className="text-sm text-fumaca">
+            Montou e quer trocar dois de lugar? Não precisa apagar nada nem
+            remontar o treino.
+          </p>
+          <Lista
+            itens={[
               <>
-                Use <B>↑ subir</B> e <B>↓ descer</B> para deixar na ordem em que
-                ele vai executar.
+                <strong>Clique em cima do exercício</strong> que você quer mover.
+                Ele se abre — é aqui que quase todo mundo trava, porque fechado
+                ele não mostra os botões.
+              </>,
+              <>
+                Na linha de baixo, ao lado de <B>Salvar</B>, aparecem{" "}
+                <B>↑ subir</B> e <B>↓ descer</B>. Cada clique anda uma posição.
+              </>,
+              <>
+                Clique quantas vezes precisar. O primeiro da lista não mostra{" "}
+                <B>↑ subir</B> e o último não mostra <B>↓ descer</B>, porque não
+                teriam para onde ir.
               </>,
             ]}
           />
+          <Nota titulo="A ordem é a ordem do treino">
+            É nessa sequência que o aluno vê no celular dele, numerada 01, 02,
+            03. Então ela vale como orientação de execução: o que estiver em
+            primeiro é o que você quer que ele faça primeiro.
+          </Nota>
           <Nota titulo="Não existe “salvar tudo”">
             Cada botão salva na hora que você clica — o de <B>Adicionar</B>, o{" "}
             <B>Salvar</B> de cada treino, o de dentro de cada exercício. Enquanto
