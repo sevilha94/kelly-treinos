@@ -69,14 +69,22 @@ export function Lembretes({
 
   async function desligar() {
     setEstado("desligando");
-    const registro = await navigator.serviceWorker.getRegistration();
-    const assinatura = await registro?.pushManager.getSubscription();
+    setErro(null);
+    try {
+      const registro = await navigator.serviceWorker.getRegistration();
+      const assinatura = await registro?.pushManager.getSubscription();
 
-    if (assinatura) {
-      await removerAssinatura({ token, endpoint: assinatura.endpoint });
-      await assinatura.unsubscribe();
+      if (assinatura) {
+        await removerAssinatura({ token, endpoint: assinatura.endpoint });
+        await assinatura.unsubscribe();
+      }
+      setEstado("pronto");
+    } catch {
+      // sem isto a tela ficaria em "desligando" para sempre, e o aluno acharia
+      // que desligou quando o aviso continuaria chegando
+      setErro("Não consegui desligar o lembrete. Tente de novo mais tarde.");
+      setEstado("ligado");
     }
-    setEstado("pronto");
   }
 
   return (

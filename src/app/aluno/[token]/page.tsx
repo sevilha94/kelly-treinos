@@ -60,7 +60,7 @@ export async function generateMetadata(
 
 export default async function Page(props: PageProps<"/aluno/[token]">) {
   const { token } = await props.params;
-  const { t } = await props.searchParams;
+  const { t, aviso } = await props.searchParams;
 
   const supabase = createAdminClient();
 
@@ -234,6 +234,8 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
           );
         })}
       </nav>
+
+      <Aviso codigo={typeof aviso === "string" ? aviso : undefined} />
 
       {/* A faixa vermelha ja era o elemento da marca nos cabecalhos de cartao.
           Aqui ela vira o cabecalho do treino: e o que da a cara de planilha de
@@ -627,4 +629,34 @@ function horaDe(iso: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+/**
+ * Recado curto quando uma acao nao deu certo.
+ *
+ * O aluno esta na academia, no meio da serie: nao adianta explicar causa. Ele
+ * precisa saber se pode seguir ou se tem que refazer. Some sozinho na proxima
+ * navegacao, porque vive no endereco.
+ */
+const AVISOS: Record<string, string> = {
+  "nao-salvou":
+    "Não consegui salvar agora. Confira sua internet e toque de novo.",
+  carga:
+    "Marquei o exercício, mas não entendi a carga. Escreva só o número, como 12 ou 12,5.",
+  "sem-acesso":
+    "Seu acesso está pausado. Fale com a Kelly para liberar de novo.",
+};
+
+function Aviso({ codigo }: { codigo?: string }) {
+  const texto = codigo ? AVISOS[codigo] : undefined;
+  if (!texto) return null;
+
+  return (
+    <p
+      role="status"
+      className="border-l-[3px] border-alerta bg-sangue-escuro/15 px-5 py-3 text-sm text-alerta"
+    >
+      {texto}
+    </p>
+  );
 }

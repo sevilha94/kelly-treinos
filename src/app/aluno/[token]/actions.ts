@@ -1,9 +1,46 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { avisarPainel } from "@/lib/push";
 import { createAdminClient } from "@/lib/supabase/admin";
+
+/**
+ * Leva o aluno de volta a tela dele com um recado.
+ *
+ * Acao de formulario nao devolve nada para a pagina, e a tela do aluno e
+ * renderizada no servidor. Entao o recado viaja pelo endereco e some sozinho na
+ * proxima navegacao. Sem isso, a unica saida seria a acao terminar calada — que
+ * e justamente o defeito que estou tirando daqui.
+ */
+function voltarComRecado(token: string, recado: string): never {
+  redirect(`/aluno/${token}?aviso=${recado}`);
+}
+
+/**
+ * Le a carga do jeito que o aluno digita, e nao do jeito que o banco quer.
+ *
+ * Na academia se escreve "12kg", "12,5", "12.5" e ate "12 kg". Antes, qualquer
+ * coisa que nao fosse numero puro virava nulo sem avisar: o aluno registrava a
+ * carga, a tela recarregava e o numero tinha sumido. Como a evolucao de carga e
+ * o unico historico que ele constroi, sumir calado e o pior desfecho possivel.
+ */
+function leCarga(bruto: string): { valor: number | null; invalida: boolean } {
+  const limpo = bruto.trim();
+  if (!limpo) return { valor: null, invalida: false };
+
+  const soNumero = limpo.replace(/[^0-9.,]/g, "").replace(",", ".");
+  const valor = Number(soNumero);
+
+  // 1000 kg cobre com folga qualquer aparelho de academia; acima disso e digito
+  // sobrando, e guardar estraga o grafico de evolucao dele
+  if (!soNumero || !Number.isFinite(valor) || valor <= 0 || valor > 1000) {
+    return { valor: null, invalida: true };
+  }
+
+  return { valor, invalida: false };
+}
 
 /**
  * O aluno nao tem login: o token da URL e a credencial dele. Toda acao comeca
@@ -70,30 +107,40 @@ async function itemPertenceAoAluno(
 export async function marcarExercicio(formData: FormData) {
   const token = String(formData.get("token") ?? "");
   const contexto = await alunoDoToken(token);
-  if (!contexto) return;
+  if (!contexto) voltarComRecado(token, "sem-acesso");
 
   const treinoId = String(formData.get("treino_id") ?? "");
   const itemId = String(formData.get("item_id") ?? "");
-  if (!(await itemPertenceAoAluno(contexto, itemId))) return;
+  if (!(await itemPertenceAoAluno(contexto, itemId))) {
+    voltarComRecado(token, "nao-salvou");
+  }
 
   const sessaoId = await sessaoDeHoje(contexto, treinoId);
-  if (!sessaoId) return;
+  if (!sessaoId) voltarComRecado(token, "nao-salvou");
 
-  const cargaBruta = String(formData.get("carga_kg") ?? "").trim();
-  const carga = cargaBruta ? Number(cargaBruta.replace(",", ".")) : null;
+  const carga = leCarga(String(formData.get("carga_kg") ?? ""));
 
-  await contexto.supabase.from("sessao_item").upsert(
+  const { error } = await contexto.supabase.from("sessao_item").upsert(
     {
       sessao_id: sessaoId,
       treino_exercicio_id: itemId,
       feito: formData.get("feito") === "sim",
-      carga_kg: carga !== null && Number.isFinite(carga) ? carga : null,
+      carga_kg: carga.valor,
       atualizado_em: new Date().toISOString(),
     },
     { onConflict: "sessao_id,treino_exercicio_id" },
   );
 
+  if (error) {
+    console.error(`[kelly-treinos] marcarExercicio: ${error.message}`);
+    voltarComRecado(token, "nao-salvou");
+  }
+
   revalidatePath(`/aluno/${token}`);
+
+  // marcar valeu; so a carga e que nao deu para entender. Contar isso e melhor
+  // do que deixar o aluno descobrir sozinho que o numero nao ficou
+  if (carga.invalida) voltarComRecado(token, "carga");
 }
 
 /**
@@ -108,10 +155,14 @@ export async function salvarAssinatura(dados: {
   p256dh: string;
   auth: string;
 }) {
+  // estas duas falham em voz alta de proposito. Quem chama e a tela do aluno,
+  // dentro de try/catch: se elas voltassem caladas, o botao acenderia "lembrete
+  // ligado" sem nada gravado, e o aluno so descobriria semanas depois que nunca
+  // recebeu aviso nenhum. Foi exatamente o que aconteceu na vida real.
   const contexto = await alunoDoToken(dados.token);
-  if (!contexto) return;
+  if (!contexto) throw new Error("cadastro não encontrado");
 
-  await contexto.supabase.from("aluno_lembrete").upsert(
+  const { error } = await contexto.supabase.from("aluno_lembrete").upsert(
     {
       aluno_id: contexto.alunoId,
       endpoint: dados.endpoint,
@@ -121,6 +172,8 @@ export async function salvarAssinatura(dados: {
     },
     { onConflict: "endpoint" },
   );
+
+  if (error) throw new Error(`não consegui guardar a assinatura: ${error.message}`);
 }
 
 export async function removerAssinatura(dados: {
@@ -128,13 +181,15 @@ export async function removerAssinatura(dados: {
   endpoint: string;
 }) {
   const contexto = await alunoDoToken(dados.token);
-  if (!contexto) return;
+  if (!contexto) throw new Error("cadastro não encontrado");
 
-  await contexto.supabase
+  const { error } = await contexto.supabase
     .from("aluno_lembrete")
     .delete()
     .eq("aluno_id", contexto.alunoId)
     .eq("endpoint", dados.endpoint);
+
+  if (error) throw new Error(`não consegui desligar o lembrete: ${error.message}`);
 }
 
 const TIPOS_ACEITOS = [
@@ -236,13 +291,13 @@ const PERCEPCOES = ["facil", "na_medida", "puxado"] as const;
 export async function enviarFeedback(formData: FormData) {
   const token = String(formData.get("token") ?? "");
   const contexto = await alunoDoToken(token);
-  if (!contexto) return;
+  if (!contexto) voltarComRecado(token, "sem-acesso");
 
   const sessaoId = await sessaoDeHoje(
     contexto,
     String(formData.get("treino_id") ?? ""),
   );
-  if (!sessaoId) return;
+  if (!sessaoId) voltarComRecado(token, "nao-salvou");
 
   const escolha = String(formData.get("percepcao") ?? "");
   const percepcao = PERCEPCOES.includes(escolha as (typeof PERCEPCOES)[number])
@@ -251,7 +306,7 @@ export async function enviarFeedback(formData: FormData) {
 
   const comentario = String(formData.get("comentario") ?? "").trim();
 
-  await contexto.supabase
+  const { error } = await contexto.supabase
     .from("sessao")
     .update({
       ...(percepcao ? { percepcao } : {}),
@@ -259,24 +314,34 @@ export async function enviarFeedback(formData: FormData) {
     })
     .eq("id", sessaoId);
 
+  if (error) {
+    console.error(`[kelly-treinos] enviarFeedback: ${error.message}`);
+    voltarComRecado(token, "nao-salvou");
+  }
+
   revalidatePath(`/aluno/${token}`);
 }
 
 export async function finalizarTreino(formData: FormData) {
   const token = String(formData.get("token") ?? "");
   const contexto = await alunoDoToken(token);
-  if (!contexto) return;
+  if (!contexto) voltarComRecado(token, "sem-acesso");
 
   const treinoId = String(formData.get("treino_id") ?? "");
   const sessaoId = await sessaoDeHoje(contexto, treinoId);
-  if (!sessaoId) return;
+  if (!sessaoId) voltarComRecado(token, "nao-salvou");
 
   const desfazer = formData.get("desfazer") === "sim";
 
-  await contexto.supabase
+  const { error } = await contexto.supabase
     .from("sessao")
     .update({ finalizada_em: desfazer ? null : new Date().toISOString() })
     .eq("id", sessaoId);
+
+  if (error) {
+    console.error(`[kelly-treinos] finalizarTreino: ${error.message}`);
+    voltarComRecado(token, "nao-salvou");
+  }
 
   revalidatePath(`/aluno/${token}`);
 }
