@@ -63,6 +63,18 @@ function conferir(onde: string, erro: { message: string } | null) {
 // ALUNO
 // ---------------------------------------------------------------------------
 
+/**
+ * Volta para a ficha do aluno com um recado curto.
+ *
+ * Estas telas sao renderizadas no servidor e usam acao de formulario, que nao
+ * devolve nada para a pagina. Sem isto, um clique que nao pode dar certo
+ * terminava calado — a Kelly clicava, a tela recarregava igual, e ela concluia
+ * que o sistema estava quebrado.
+ */
+function avisar(alunoId: string, recado: string): never {
+  redirect(`/painel/alunos/${alunoId}?aviso=${recado}`);
+}
+
 export async function salvarAluno(
   _anterior: EstadoAluno,
   formData: FormData,
@@ -196,7 +208,7 @@ export async function copiarPlanilha(formData: FormData) {
   const destinoId = String(formData.get("aluno_id") ?? "");
   const origemId = texto(formData, "origem_id");
 
-  if (!origemId) return;
+  if (!origemId) avisar(destinoId, "sem-origem");
 
   await copiarTreinos(supabase, origemId, destinoId);
 
@@ -225,7 +237,7 @@ export async function adicionarItem(formData: FormData) {
   const treinoId = String(formData.get("treino_id") ?? "");
   const exercicioId = texto(formData, "exercicio_id");
 
-  if (!exercicioId) return;
+  if (!exercicioId) avisar(alunoId, "sem-exercicio");
 
   // a posicao vem do maior numero em uso, e nao da contagem: removendo um
   // exercicio a contagem cai, e o proximo a entrar receberia um numero que ja
@@ -432,7 +444,7 @@ export async function gerarMensalidade(formData: FormData) {
     .eq("id", alunoId)
     .single();
 
-  if (!aluno?.valor_mensalidade) return;
+  if (!aluno?.valor_mensalidade) avisar(alunoId, "sem-valor");
 
   const competencia = texto(formData, "competencia") ?? competenciaAtual();
   const [ano, mes] = competencia.split("-");

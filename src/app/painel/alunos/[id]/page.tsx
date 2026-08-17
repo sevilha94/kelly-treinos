@@ -28,6 +28,7 @@ import {
 
 export default async function Page(props: PageProps<"/painel/alunos/[id]">) {
   const { id } = await props.params;
+  const { aviso } = await props.searchParams;
   const supabase = await createClient();
 
   const [
@@ -117,6 +118,8 @@ export default async function Page(props: PageProps<"/painel/alunos/[id]">) {
       >
         ‹ Voltar para os alunos
       </Link>
+      <AvisoDaFicha codigo={typeof aviso === "string" ? aviso : undefined} />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="titulo-pagina text-3xl">{aluno.nome}</h1>
         <Link
@@ -382,5 +385,34 @@ function ControleDeAcesso({ aluno }: { aluno: Aluno }) {
         </BotaoAcao>
       </form>
     </div>
+  );
+}
+
+/**
+ * Recado quando o clique nao tinha como dar certo.
+ *
+ * Cada texto diz o que falta e onde resolver — a Kelly nao precisa descobrir
+ * sozinha por que a tela voltou igual.
+ */
+const AVISOS_DA_FICHA: Record<string, string> = {
+  "sem-valor":
+    "Para lançar a mensalidade, primeiro preencha o valor em Mensalidade, aqui embaixo.",
+  "sem-exercicio":
+    "Escolha um exercício na lista antes de clicar em Adicionar.",
+  "sem-origem":
+    "Escolha de qual aluno você quer copiar a planilha antes de confirmar.",
+};
+
+function AvisoDaFicha({ codigo }: { codigo?: string }) {
+  const texto = codigo ? AVISOS_DA_FICHA[codigo] : undefined;
+  if (!texto) return null;
+
+  return (
+    <p
+      role="status"
+      className="rounded-2xl border-l-[3px] border-alerta bg-sangue-escuro/15 px-4 py-3 text-sm text-alerta"
+    >
+      {texto}
+    </p>
   );
 }
