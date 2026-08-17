@@ -641,8 +641,10 @@ function horaDe(iso: string) {
 const AVISOS: Record<string, string> = {
   "nao-salvou":
     "Não consegui salvar agora. Confira sua internet e toque de novo.",
+  // nao diz "marquei" porque o mesmo botao tambem desmarca — dizer o que
+  // aconteceu com a carga e o que importa aqui
   carga:
-    "Marquei o exercício, mas não entendi a carga. Escreva só o número, como 12 ou 12,5.",
+    "Não entendi a carga, então mantive a anterior. Escreva só o número, como 12 ou 12,5.",
   "sem-acesso":
     "Seu acesso está pausado. Fale com a Kelly para liberar de novo.",
 };

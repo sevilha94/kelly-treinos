@@ -125,7 +125,10 @@ export async function marcarExercicio(formData: FormData) {
       sessao_id: sessaoId,
       treino_exercicio_id: itemId,
       feito: formData.get("feito") === "sim",
-      carga_kg: carga.valor,
+      // carga ilegivel nao entra no gravado: mandando nulo, ela apagaria a
+      // carga que ja estava certa. Errar a digitacao nao pode custar o registro
+      // anterior — melhor manter o que havia e avisar
+      ...(carga.invalida ? {} : { carga_kg: carga.valor }),
       atualizado_em: new Date().toISOString(),
     },
     { onConflict: "sessao_id,treino_exercicio_id" },
