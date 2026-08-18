@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { MEDIDAS } from "@/lib/tipos";
 import { copiarTreinos } from "@/lib/copiaPlanilha";
 import { competenciaAtual } from "@/lib/mensalidades";
+import { posicoesQueMudaram, reordenar } from "@/lib/ordem";
 
 export type EstadoAluno = { erro?: string };
 
@@ -327,23 +328,15 @@ export async function moverItem(formData: FormData) {
 
   if (!lista?.length) return;
 
-  const de = lista.findIndex((linha) => linha.id === itemId);
-  const para = direcao === "cima" ? de - 1 : de + 1;
-  if (de < 0 || para < 0 || para >= lista.length) return;
-
-  const [movido] = lista.splice(de, 1);
-  lista.splice(para, 0, movido);
+  const nova = reordenar(lista, itemId, direcao === "cima" ? "cima" : "baixo");
+  if (!nova) return;
 
   await Promise.all(
-    lista.flatMap((linha, posicao) =>
-      linha.ordem === posicao
-        ? []
-        : [
-            supabase
-              .from("treino_exercicio")
-              .update({ ordem: posicao })
-              .eq("id", linha.id),
-          ],
+    posicoesQueMudaram(lista, nova).map((linha) =>
+      supabase
+        .from("treino_exercicio")
+        .update({ ordem: linha.ordem })
+        .eq("id", linha.id),
     ),
   );
 

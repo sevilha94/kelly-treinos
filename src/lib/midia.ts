@@ -62,7 +62,9 @@ function idDoYoutube(url: string): string | null {
     /youtu\.be\/([\w-]{11})/,
     /youtube\.com\/watch\?(?:.*&)?v=([\w-]{11})/,
     /youtube\.com\/shorts\/([\w-]{11})/,
-    /youtube\.com\/embed\/([\w-]{11})/,
+    // -nocookie tambem: e o endereco que o proprio app gera, e a Kelly pode
+    // acabar colando ele de volta no campo
+    /youtube(?:-nocookie)?\.com\/embed\/([\w-]{11})/,
   ];
 
   for (const padrao of padroes) {

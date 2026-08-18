@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { avisarPainel } from "@/lib/push";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { leCarga } from "@/lib/carga";
 
 /**
  * Leva o aluno de volta a tela dele com um recado.
@@ -16,30 +17,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
  */
 function voltarComRecado(token: string, recado: string): never {
   redirect(`/aluno/${token}?aviso=${recado}`);
-}
-
-/**
- * Le a carga do jeito que o aluno digita, e nao do jeito que o banco quer.
- *
- * Na academia se escreve "12kg", "12,5", "12.5" e ate "12 kg". Antes, qualquer
- * coisa que nao fosse numero puro virava nulo sem avisar: o aluno registrava a
- * carga, a tela recarregava e o numero tinha sumido. Como a evolucao de carga e
- * o unico historico que ele constroi, sumir calado e o pior desfecho possivel.
- */
-function leCarga(bruto: string): { valor: number | null; invalida: boolean } {
-  const limpo = bruto.trim();
-  if (!limpo) return { valor: null, invalida: false };
-
-  const soNumero = limpo.replace(/[^0-9.,]/g, "").replace(",", ".");
-  const valor = Number(soNumero);
-
-  // 1000 kg cobre com folga qualquer aparelho de academia; acima disso e digito
-  // sobrando, e guardar estraga o grafico de evolucao dele
-  if (!soNumero || !Number.isFinite(valor) || valor <= 0 || valor > 1000) {
-    return { valor: null, invalida: true };
-  }
-
-  return { valor, invalida: false };
 }
 
 /**

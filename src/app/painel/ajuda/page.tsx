@@ -619,6 +619,30 @@ export default async function Page() {
           </Nota>
         </Ficha>
 
+        <Ficha id="copia" titulo="Cópia de segurança">
+          <p>
+            Todo dia o sistema guarda sozinho uma cópia de tudo: seus alunos, as
+            planilhas, o histórico de carga de cada um, as avaliações e as
+            mensalidades. Você não precisa fazer nada para isso acontecer.
+          </p>
+          <p>
+            No painel, em <B>Cópia de segurança</B>, aparece a data da cópia mais
+            recente. É ali que você confere que está acontecendo — e o botão{" "}
+            <B>Baixar</B> salva o arquivo no seu computador.
+          </p>
+          <Nota titulo="Baixe uma por mês e guarde">
+            O sistema guarda as cópias dos últimos 30 dias. Baixar uma de vez em
+            quando e deixar salva no seu computador protege contra o caso raro em
+            que o problema é com o próprio sistema. É o mesmo motivo de guardar
+            uma via impressa de documento importante.
+          </Nota>
+          <p className="text-sm text-fumaca">
+            O arquivo não abre como planilha: ele serve para recolocar tudo no
+            lugar se algum dia acontecer alguma coisa. Se precisar, entregue ao
+            Lucas ou a quem estiver cuidando do sistema.
+          </p>
+        </Ficha>
+
         <Ficha id="duvidas" titulo="Perguntas comuns">
           <Pergunta pergunta="Cadê o botão de salvar tudo no final?">
             Não existe, e é de propósito. Cada botão salva na hora que você
@@ -674,6 +698,7 @@ function Indice() {
     ["avaliacao", "Avaliação física"],
     ["mensalidade", "Mensalidade"],
     ["acesso", "Controlar o acesso"],
+    ["copia", "Cópia de segurança"],
     ["duvidas", "Perguntas comuns"],
   ];
 

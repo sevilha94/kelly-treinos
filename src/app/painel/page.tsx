@@ -2,6 +2,8 @@ import Link from "next/link";
 import { BotaoAcao } from "@/componentes/BotaoAcao";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { BALDE, DIAS_GUARDADOS } from "@/lib/copiaDeSeguranca";
 import { salvarChavePix, salvarHoraDoLembrete } from "./alunos/actions";
 import { AvisosNoCelular } from "./AvisosNoCelular";
 import { Cartao, Vazio } from "@/componentes/Cartao";
@@ -18,6 +20,7 @@ import {
   ROTULO_NIVEL,
   type Nivel,
 } from "@/lib/mensalidades";
+import { formataData } from "@/lib/tipos";
 
 /** Mais grave primeiro: e a ordem em que ela precisa agir. */
 const ORDEM_NIVEL: Record<Nivel, number> = {
@@ -297,6 +300,8 @@ export default async function Page() {
         </form>
       </details>
 
+      <CopiasDeSeguranca />
+
       <p className="text-sm leading-relaxed text-fumaca">
         Só entram nesta conta os treinos que o aluno finalizou pelo link. Quem
         treina sem marcar aparece como sumido — vale combinar isso com ele.
@@ -397,4 +402,82 @@ function Atalho({
       </span>
     </Link>
   );
+}
+
+/**
+ * Onde a Kelly ve e baixa as copias de seguranca.
+ *
+ * Existe para ela nao precisar acreditar que o backup acontece: a data do
+ * arquivo mais recente esta ali. Backup que ninguem consegue conferir e o mesmo
+ * que backup nenhum — a pessoa so descobre no dia em que precisa.
+ */
+async function CopiasDeSeguranca() {
+  const supabase = createAdminClient();
+  const { data } = await supabase.storage
+    .from(BALDE)
+    .list("", { limit: 30, sortBy: { column: "name", order: "desc" } });
+
+  const copias = (data ?? []).filter((item) => item.name.endsWith(".json"));
+  const ultima = copias[0];
+
+  return (
+    <details className="rounded-2xl border border-borda bg-carvao">
+      <summary className="cursor-pointer px-4 py-3 text-sm uppercase tracking-wider text-fumaca hover:text-gelo">
+        Cópia de segurança
+        {ultima ? (
+          <span className="ml-2 normal-case tracking-normal text-gelo">
+            última: {formataData(diaDoArquivo(ultima.name))}
+          </span>
+        ) : (
+          <span className="ml-2 normal-case tracking-normal text-alerta">
+            ainda nenhuma
+          </span>
+        )}
+      </summary>
+
+      <div className="space-y-3 px-4 pb-4">
+        <p className="text-sm leading-relaxed text-fumaca">
+          Todo dia o sistema guarda uma cópia de tudo: seus alunos, as
+          planilhas, o histórico de carga e as avaliações. Ficam as cópias dos
+          últimos {DIAS_GUARDADOS} dias.
+        </p>
+
+        {copias.length === 0 ? (
+          <p className="text-sm text-alerta">
+            Nenhuma cópia ainda. A primeira sai na próxima madrugada.
+          </p>
+        ) : (
+          <ul className="divide-y divide-borda border-y border-borda">
+            {copias.slice(0, 7).map((copia) => (
+              <li
+                key={copia.name}
+                className="flex items-center justify-between gap-3 py-2.5"
+              >
+                <span className="text-sm">
+                  {formataData(diaDoArquivo(copia.name))}
+                </span>
+                <a
+                  href={`/painel/copia/${copia.name}`}
+                  className="inline-flex min-h-11 items-center text-xs uppercase tracking-wider text-sangue-claro hover:underline"
+                >
+                  Baixar
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <p className="text-xs leading-relaxed text-fumaca">
+          Guarde uma dessas cópias no seu computador de vez em quando — de
+          preferência uma por mês. Se algum dia acontecer alguma coisa com o
+          sistema, é esse arquivo que traz tudo de volta. Ele não abre sozinho:
+          entregue ao Lucas ou a quem cuidar do sistema.
+        </p>
+      </div>
+    </details>
+  );
+}
+
+function diaDoArquivo(nome: string) {
+  return nome.replace(/^copia-|\.json$/g, "");
 }

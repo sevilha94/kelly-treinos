@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { DIAS_DE_ANTECEDENCIA, vencimentoNoMes } from "@/lib/mensalidades";
 import { avisarPainel, enviarAviso } from "@/lib/push";
+import { gerarCopia, limparCopiasAntigas } from "@/lib/copiaDeSeguranca";
 
 /**
  * Dispara os lembretes do dia.
@@ -37,6 +38,10 @@ export async function GET(request: Request) {
   // execucao falhasse
   const lancadas = await lancarMensalidadesDoMes(supabase, hojeLocal);
 
+  // a copia vem antes de qualquer saida antecipada e nao depende do horario dos
+  // lembretes: e a unica coisa aqui que, faltando um dia, nao tem como refazer
+  const copia = await copiaDoDia(supabase, hojeLocal);
+
   const { data: config } = await supabase
     .from("configuracao")
     .select("valor")
@@ -59,6 +64,7 @@ export async function GET(request: Request) {
     return Response.json({
       enviados: 0,
       lancadas,
+      copia,
       motivo: "ainda antes do horário do lembrete",
       horaLocal,
       horaEscolhida,
@@ -75,6 +81,7 @@ export async function GET(request: Request) {
     return Response.json({
       enviados: 0,
       lancadas,
+      copia,
       motivo: "os lembretes de hoje já saíram",
       horaLocal,
     });
@@ -90,7 +97,12 @@ export async function GET(request: Request) {
     .not("treino_id", "is", null);
 
   if (!agenda?.length) {
-    return Response.json({ enviados: 0, lancadas, motivo: "ninguém treina hoje" });
+    return Response.json({
+      enviados: 0,
+      lancadas,
+      copia,
+      motivo: "ninguém treina hoje",
+    });
   }
 
   const [{ data: assinaturas }, { data: sessoes }, { data: alunos }] =
@@ -178,6 +190,7 @@ export async function GET(request: Request) {
   return Response.json({
     enviados,
     lancadas,
+    copia,
     avisoDoDia,
     horaLocal,
   });
@@ -339,4 +352,39 @@ function diferencaEmDias(de: string, ate: string) {
   const inicio = new Date(`${de}T12:00:00Z`).getTime();
   const fim = new Date(`${ate}T12:00:00Z`).getTime();
   return Math.round((fim - inicio) / 86_400_000);
+}
+
+/**
+ * Uma copia por dia, na primeira execucao do dia.
+ *
+ * Marca a data em `configuracao` depois de dar certo: se falhar, a proxima
+ * execucao tenta de novo em vez de dar o dia por coberto. Backup que se
+ * considera feito sem ter sido e pior do que backup nenhum, porque a pessoa
+ * para de se preocupar.
+ */
+async function copiaDoDia(supabase: ReturnType<typeof createAdminClient>, hoje: string) {
+  const { data: marca } = await supabase
+    .from("configuracao")
+    .select("valor")
+    .eq("chave", "copia_feita_em")
+    .maybeSingle();
+
+  if (marca?.valor === hoje) return "já feita hoje";
+
+  const resultado = await gerarCopia(supabase, hoje);
+  if ("erro" in resultado) {
+    console.error(`[kelly-treinos] copia de seguranca: ${resultado.erro}`);
+    return `falhou: ${resultado.erro}`;
+  }
+
+  const apagadas = await limparCopiasAntigas(supabase, hoje);
+
+  await supabase.from("configuracao").upsert(
+    { chave: "copia_feita_em", valor: hoje, atualizado_em: new Date().toISOString() },
+    { onConflict: "chave" },
+  );
+
+  return `${resultado.linhas} linhas, ${Math.round(resultado.bytes / 1024)} KB${
+    apagadas ? `, ${apagadas} antigas apagadas` : ""
+  }`;
 }
