@@ -619,6 +619,26 @@ export default async function Page() {
           </Nota>
         </Ficha>
 
+        <Ficha id="saude" titulo="Quando algo dá errado sozinho">
+          <p>
+            Existe um motor que trabalha sozinho todo dia: manda os lembretes,
+            lança as mensalidades do mês e guarda a cópia de segurança. Você
+            nunca precisa mexer nele.
+          </p>
+          <p>
+            Se ele parar, <strong>aparece um aviso no topo do painel</strong> —
+            em amarelo quando está só atrasado, em vermelho quando parou de
+            verdade. Nesse caso, me avise: não é nada que você tenha feito de
+            errado, e nada que você consiga resolver pela tela.
+          </p>
+          <Nota titulo="Silêncio é sinal de que está tudo bem">
+            O aviso só aparece quando há problema. Se não tem faixa nenhuma no
+            topo, o motor rodou. Faixa verde todo dia dizendo “tudo certo” é o
+            tipo de coisa que a gente aprende a ignorar — e aí o dia que importa
+            passa batido também.
+          </Nota>
+        </Ficha>
+
         <Ficha id="copia" titulo="Cópia de segurança">
           <p>
             Todo dia o sistema guarda sozinho uma cópia de tudo: seus alunos, as
@@ -698,6 +718,7 @@ function Indice() {
     ["avaliacao", "Avaliação física"],
     ["mensalidade", "Mensalidade"],
     ["acesso", "Controlar o acesso"],
+    ["saude", "Quando algo dá errado sozinho"],
     ["copia", "Cópia de segurança"],
     ["duvidas", "Perguntas comuns"],
   ];

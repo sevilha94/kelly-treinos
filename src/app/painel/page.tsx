@@ -4,6 +4,7 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BALDE, DIAS_GUARDADOS } from "@/lib/copiaDeSeguranca";
+import { verificarSaude } from "@/lib/saude";
 import { salvarChavePix, salvarHoraDoLembrete } from "./alunos/actions";
 import { AvisosNoCelular } from "./AvisosNoCelular";
 import { Cartao, Vazio } from "@/componentes/Cartao";
@@ -115,6 +116,8 @@ export default async function Page() {
   return (
     <div className="space-y-6">
       <Abertura />
+
+      <FaixaDeSaude />
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Atalho
@@ -480,4 +483,55 @@ async function CopiasDeSeguranca() {
 
 function diaDoArquivo(nome: string) {
   return nome.replace(/^copia-|\.json$/g, "");
+}
+
+/**
+ * Aviso de que o motor do sistema parou.
+ *
+ * So aparece quando ha problema — faixa verde de "tudo certo" todo dia e o tipo
+ * de coisa que a pessoa aprende a ignorar, e ai o dia em que importa passa
+ * batido tambem.
+ *
+ * A checagem mora aqui, e nao no disparo: disparo morto nao avisa que morreu.
+ */
+async function FaixaDeSaude() {
+  const saude = await verificarSaude(createAdminClient());
+  if (saude.estado === "bem") return null;
+
+  const parado = saude.estado === "parado";
+  const quanto =
+    saude.horasParado === null
+      ? "ainda não rodou nenhuma vez"
+      : saude.horasParado >= 24
+        ? `parado há ${Math.floor(saude.horasParado / 24)} dia(s)`
+        : `parado há ${saude.horasParado} horas`;
+
+  return (
+    <div
+      role="status"
+      className={`rounded-2xl border-l-[3px] px-4 py-3 ${
+        parado
+          ? "border-alerta bg-sangue-escuro/20"
+          : "border-amber-400 bg-amber-400/10"
+      }`}
+    >
+      <p className={`text-sm font-semibold ${parado ? "text-alerta" : "text-amber-400"}`}>
+        {parado
+          ? "O sistema parou de rodar as tarefas automáticas"
+          : "As tarefas automáticas podem estar atrasadas"}
+      </p>
+      <p className="mt-1 text-sm leading-relaxed text-fumaca">
+        O motor que manda os lembretes, lança as mensalidades do mês e guarda a
+        cópia de segurança está {quanto}.{" "}
+        {parado
+          ? "Nada disso está acontecendo agora. Avise o Lucas."
+          : "Se continuar assim nas próximas horas, avise o Lucas."}
+      </p>
+      {saude.ultimoErro && (
+        <p className="mt-1.5 text-xs text-fumaca">
+          Último erro registrado: {saude.ultimoErro}
+        </p>
+      )}
+    </div>
+  );
 }

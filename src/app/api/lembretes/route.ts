@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { DIAS_DE_ANTECEDENCIA, vencimentoNoMes } from "@/lib/mensalidades";
 import { avisarPainel, enviarAviso } from "@/lib/push";
 import { gerarCopia, limparCopiasAntigas } from "@/lib/copiaDeSeguranca";
+import { registrarBatida } from "@/lib/saude";
 
 /**
  * Dispara os lembretes do dia.
@@ -20,6 +21,26 @@ export async function GET(request: Request) {
   }
 
   const supabase = createAdminClient();
+
+  // a batida e registrada aconteca o que acontecer, inclusive quando o trabalho
+  // falha no meio: e ela que o painel le para saber se o coracao ainda bate
+  let erro: string | null = null;
+  try {
+    const resultado = await rodarDisparo(supabase);
+    if (typeof resultado.copia === "string" && resultado.copia.startsWith("falhou")) {
+      erro = resultado.copia;
+    }
+    return Response.json(resultado);
+  } catch (e) {
+    erro = e instanceof Error ? e.message : String(e);
+    console.error(`[kelly-treinos] disparo diário: ${erro}`);
+    return Response.json({ erro }, { status: 500 });
+  } finally {
+    await registrarBatida(supabase, erro);
+  }
+}
+
+async function rodarDisparo(supabase: ReturnType<typeof createAdminClient>) {
 
   const agora = new Date();
   const horaLocal = Number(
@@ -61,14 +82,14 @@ export async function GET(request: Request) {
   // Assim, se rodar as 7 ele sai as 7; se so rodar mais tarde, sai mais tarde.
   // Atrasado ainda serve — nao existir, nao.
   if (horaLocal < horaEscolhida) {
-    return Response.json({
+    return {
       enviados: 0,
       lancadas,
       copia,
       motivo: "ainda antes do horário do lembrete",
       horaLocal,
       horaEscolhida,
-    });
+    };
   }
 
   const { data: marca } = await supabase
@@ -78,13 +99,13 @@ export async function GET(request: Request) {
     .maybeSingle();
 
   if (marca?.valor === hojeLocal) {
-    return Response.json({
+    return {
       enviados: 0,
       lancadas,
       copia,
       motivo: "os lembretes de hoje já saíram",
       horaLocal,
-    });
+    };
   }
 
   // segunda = 1 ... domingo = 7, como a agenda guarda
@@ -97,12 +118,12 @@ export async function GET(request: Request) {
     .not("treino_id", "is", null);
 
   if (!agenda?.length) {
-    return Response.json({
+    return {
       enviados: 0,
       lancadas,
       copia,
       motivo: "ninguém treina hoje",
-    });
+    };
   }
 
   const [{ data: assinaturas }, { data: sessoes }, { data: alunos }] =
@@ -187,13 +208,13 @@ export async function GET(request: Request) {
       { onConflict: "chave" },
     );
 
-  return Response.json({
+  return {
     enviados,
     lancadas,
     copia,
     avisoDoDia,
     horaLocal,
-  });
+  };
 }
 
 /**
