@@ -331,14 +331,37 @@ export async function moverItem(formData: FormData) {
   const nova = reordenar(lista, itemId, direcao === "cima" ? "cima" : "baixo");
   if (!nova) return;
 
-  await Promise.all(
-    posicoesQueMudaram(lista, nova).map((linha) =>
-      supabase
-        .from("treino_exercicio")
-        .update({ ordem: linha.ordem })
-        .eq("id", linha.id),
-    ),
-  );
+  const mudaram = posicoesQueMudaram(lista, nova);
+
+  // Duas etapas, e nao uma.
+  //
+  // O banco tem uma restricao que proibe duas posicoes iguais no mesmo treino —
+  // e ela existe justamente porque o empate ja travou o botao de mover uma vez.
+  // Escrevendo direto na posicao final, uma linha passaria por cima de outra que
+  // ainda nao saiu do lugar, e o banco recusaria no meio do caminho.
+  //
+  // Entao primeiro todos saem da faixa disputada, e so depois assumem o lugar
+  // definitivo.
+  const DESLOCAMENTO = 1000;
+
+  if (mudaram.length) {
+    await Promise.all(
+      mudaram.map((linha) =>
+        supabase
+          .from("treino_exercicio")
+          .update({ ordem: linha.ordem + DESLOCAMENTO })
+          .eq("id", linha.id),
+      ),
+    );
+    await Promise.all(
+      mudaram.map((linha) =>
+        supabase
+          .from("treino_exercicio")
+          .update({ ordem: linha.ordem })
+          .eq("id", linha.id),
+      ),
+    );
+  }
 
   revalidatePath(`/painel/alunos/${alunoId}`);
 }
