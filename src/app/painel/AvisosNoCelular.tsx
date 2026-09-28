@@ -97,8 +97,9 @@ export function AvisosNoCelular({ jaLigado }: { jaLigado: boolean }) {
           </p>
         ) : estado === "sem-suporte" ? (
           <p className="text-sm text-alerta">
-            Este navegador não aceita avisos. No iPhone, adicione o painel à
-            tela de início e abra por lá.
+            Este navegador não aceita avisos. No iPhone: no Safari, toque em
+            Compartilhar › Adicionar à Tela de Início, abra o Painel pelo ícone
+            novo e ligue os avisos por lá.
           </p>
         ) : (
           <button

@@ -1,8 +1,16 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { BotaoAcao } from "@/componentes/BotaoAcao";
 import { Marca } from "@/componentes/Marca";
 import { sair } from "@/app/entrar/actions";
 import { MenuDoPainel } from "./MenuDoPainel";
+
+// Sem manifest o painel nao abre como app no iPhone, e fora do modo app o
+// Safari nao entrega notificacao: o resumo do dia nunca chegava na Kelly
+export const metadata: Metadata = {
+  manifest: "/painel.webmanifest",
+  appleWebApp: { capable: true, title: "Painel", statusBarStyle: "black" },
+};
 
 export default function Layout({ children }: LayoutProps<"/painel">) {
   return (
