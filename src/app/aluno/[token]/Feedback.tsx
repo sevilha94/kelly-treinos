@@ -53,7 +53,7 @@ export function Feedback({
             name="comentario"
             defaultValue={comentario ?? ""}
             placeholder="Quer contar algo para a Kelly?"
-            className="min-w-0 flex-1 rounded-lg border border-borda bg-grafite px-3 py-2 text-sm text-gelo placeholder:text-fumaca/60 focus:border-sangue focus:outline-none"
+            className="min-w-0 flex-1 rounded-lg border border-fumaca/70 bg-grafite px-3 py-2.5 text-base text-gelo placeholder:text-fumaca focus:border-sangue focus:outline-none"
           />
           <BotaoAcao variante="secundario" carregando="..." className="h-10 shrink-0">
             Enviar

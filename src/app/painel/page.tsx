@@ -21,7 +21,8 @@ import {
   ROTULO_NIVEL,
   type Nivel,
 } from "@/lib/mensalidades";
-import { formataData } from "@/lib/tipos";
+import { formataData, linkWhatsApp, primeiroNome } from "@/lib/tipos";
+import { CLASSE_ENTRADA } from "@/componentes/Campo";
 
 /** Mais grave primeiro: e a ordem em que ela precisa agir. */
 const ORDEM_NIVEL: Record<Nivel, number> = {
@@ -55,7 +56,7 @@ export default async function Page() {
   ] = await Promise.all([
     supabase
       .from("aluno")
-      .select("id, nome")
+      .select("id, nome, telefone")
       .is("arquivado_em", null)
       .order("nome"),
     supabase
@@ -161,7 +162,13 @@ export default async function Page() {
                 Ninguém sumido. Todo mundo treinou nos últimos 7 dias.
               </Vazio>
             ) : (
-              <Lista alunos={sumidos} frequencias={frequencias} />
+              <Lista
+                alunos={sumidos}
+                frequencias={frequencias}
+                mensagem={(nome) =>
+                  `Oi ${primeiroNome(nome)}! Senti sua falta nos treinos. Bora voltar essa semana?`
+                }
+              />
             )}
 
             {emDia.length > 0 && (
@@ -182,7 +189,7 @@ export default async function Page() {
           <Cartao
             titulo={
               bloqueados > 0
-                ? `Mensalidade — ${bloqueados} com acesso pausado`
+                ? `Mensalidade — ${bloqueados} com 7+ dias de atraso`
                 : aConferir > 0
                   ? "Mensalidade — comprovante para conferir"
                   : "Mensalidade"
@@ -190,10 +197,10 @@ export default async function Page() {
           >
             <ul className="divide-y divide-borda">
               {cobrancas.map(({ aluno, mensalidade, nivel, diasDeAtraso }) => (
-                <li key={aluno.id}>
+                <li key={aluno.id} className="flex items-center">
                   <Link
                     href={`/painel/alunos/${aluno.id}`}
-                    className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-grafite"
+                    className="flex min-w-0 flex-1 items-center justify-between gap-3 px-4 py-3 hover:bg-grafite"
                   >
                     <span className="min-w-0">
                       <span className="block truncate text-base">
@@ -211,6 +218,12 @@ export default async function Page() {
                       {ROTULO_NIVEL[nivel]}
                     </span>
                   </Link>
+                  {nivel !== "paga" && nivel !== "conferir" && (
+                    <BotaoWhatsApp
+                      telefone={aluno.telefone}
+                      texto={`Oi ${primeiroNome(aluno.nome)}! Passando pra lembrar da mensalidade de ${nomeDaCompetencia(mensalidade!.competencia)}. O Pix e o envio do comprovante estão no seu link do treino.`}
+                    />
+                  )}
                 </li>
               ))}
             </ul>
@@ -242,7 +255,7 @@ export default async function Page() {
                 name="chave_pix"
                 defaultValue={chavePix}
                 placeholder="CPF, celular, e-mail ou aleatória"
-                className="w-full rounded-lg border border-borda bg-grafite px-3 py-2 text-sm text-gelo placeholder:text-fumaca/60 focus:border-sangue focus:outline-none"
+                className={CLASSE_ENTRADA}
               />
             </label>
             <label className="block">
@@ -253,7 +266,7 @@ export default async function Page() {
                 name="titular_pix"
                 defaultValue={titularPix}
                 placeholder="Kelly Jhuly ..."
-                className="w-full rounded-lg border border-borda bg-grafite px-3 py-2 text-sm text-gelo placeholder:text-fumaca/60 focus:border-sangue focus:outline-none"
+                className={CLASSE_ENTRADA}
               />
             </label>
           </div>
@@ -284,7 +297,7 @@ export default async function Page() {
             <select
               name="hora"
               defaultValue={horaLembrete}
-              className="w-full rounded-lg border border-borda bg-grafite px-3 py-2 text-sm text-gelo focus:border-sangue focus:outline-none"
+              className={CLASSE_ENTRADA}
             >
               {Array.from({ length: 24 }, (_, hora) => (
                 <option key={hora} value={hora}>
@@ -348,9 +361,12 @@ function Abertura() {
 function Lista({
   alunos,
   frequencias,
+  mensagem,
 }: {
-  alunos: { id: string; nome: string }[];
+  alunos: { id: string; nome: string; telefone: string | null }[];
   frequencias: Map<string, Frequencia>;
+  /** Com mensagem, cada linha ganha o atalho para o WhatsApp do aluno. */
+  mensagem?: (nome: string) => string;
 }) {
   return (
     <ul className="divide-y divide-borda">
@@ -359,10 +375,10 @@ function Lista({
         const { texto, tom } = situacao(freq);
 
         return (
-          <li key={aluno.id}>
+          <li key={aluno.id} className="flex items-center">
             <Link
               href={`/painel/alunos/${aluno.id}`}
-              className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-grafite"
+              className="flex min-w-0 flex-1 items-center justify-between gap-3 px-4 py-3 hover:bg-grafite"
             >
               <span className="min-w-0">
                 <span className="block truncate text-base">{aluno.nome}</span>
@@ -374,10 +390,27 @@ function Lista({
                 {texto}
               </span>
             </Link>
+            {mensagem && (
+              <BotaoWhatsApp telefone={aluno.telefone} texto={mensagem(aluno.nome)} />
+            )}
           </li>
         );
       })}
     </ul>
+  );
+}
+
+/** Fora do link da linha: ancora dentro de ancora nao e HTML valido. */
+function BotaoWhatsApp({ telefone, texto }: { telefone: string | null; texto: string }) {
+  return (
+    <a
+      href={linkWhatsApp(telefone, texto)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mr-3 inline-flex h-11 shrink-0 items-center rounded-lg border border-borda px-3 text-xs font-semibold uppercase tracking-wider text-gelo hover:border-fumaca"
+    >
+      WhatsApp
+    </a>
   );
 }
 

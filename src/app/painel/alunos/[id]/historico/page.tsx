@@ -31,7 +31,7 @@ export default async function Page(
     <div className="space-y-5">
       <Link
         href={`/painel/alunos/${id}`}
-        className="text-sm text-fumaca hover:text-gelo"
+        className="inline-flex min-h-11 items-center text-sm text-fumaca hover:text-gelo"
       >
         ‹ Voltar para {aluno.nome}
       </Link>

@@ -30,6 +30,8 @@ import {
 import {
   DIAS_SEMANA,
   MEDIDAS,
+  diaDaSemanaDe,
+  hoje as dataDeHoje,
   calculaImc,
   formataData,
   nomeExibido,
@@ -53,7 +55,8 @@ export async function generateMetadata(
     appleWebApp: {
       capable: true,
       title: "Meu treino",
-      statusBarStyle: "black-translucent",
+      // "black-translucent" jogava o cabecalho para baixo do relogio no iPhone
+      statusBarStyle: "black",
     },
   };
 }
@@ -166,12 +169,23 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
   if (deveBloquearPorAtraso(aluno, emAberto)) {
     return (
       <Moldura nome={aluno.nome}>
-        <div className="space-y-3 px-5 py-16 text-center">
+        <div className="space-y-3 px-5 pt-16 text-center">
           <p className="titulo-marca text-2xl">Mensalidade em aberto</p>
           <p className="text-sm leading-relaxed text-fumaca">
             A mensalidade de {nomeDaCompetencia(emAberto!.competencia)} está
-            pendente. Assim que acertar com a Kelly, seu treino volta na hora.
+            pendente. Envie o comprovante aqui embaixo e seu treino volta na
+            hora.
           </p>
+        </div>
+        {/* o comprovante e o que destrava: sem ele aqui o aluno ficava preso
+            esperando a Kelly liberar na mao */}
+        <div className="pb-16">
+          <Pagamento
+            token={token}
+            emAberto={emAberto!}
+            chavePix={config.get("chave_pix") ?? ""}
+            titularPix={config.get("titular_pix") ?? ""}
+          />
         </div>
       </Moldura>
     );
@@ -194,7 +208,7 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
     );
   }
 
-  const hoje = diaDaSemanaAtual();
+  const hoje = diaDaSemanaDe(dataDeHoje());
   const treinoDeHoje = (agendaRes.data ?? []).find(
     (linha) => linha.dia_semana === hoje,
   )?.treino_id;
@@ -210,6 +224,8 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
 
   const avaliacoes = (avaliacoesRes.data ?? []) as Avaliacao[];
   const feitos = treino.itens.filter((item) => marcacoes.get(item.id)?.feito);
+  // abre sozinho o que vem a seguir: marcou um, o proximo ja aparece aberto
+  const proximo = treino.itens.find((item) => !marcacoes.get(item.id)?.feito);
 
   return (
     <Moldura nome={aluno.nome}>
@@ -220,6 +236,7 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
             <Link
               key={item.id}
               href={`/aluno/${token}?t=${item.letra}`}
+              aria-current={ativo ? "page" : undefined}
               className={`flex h-11 min-w-11 shrink-0 items-center justify-center rounded-full px-4 text-base font-semibold transition-colors ${
                 ativo
                   ? "bg-sangue text-white"
@@ -228,7 +245,10 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
             >
               {item.letra}
               {item.id === treinoDeHoje && (
-                <span className="ml-1.5 h-1.5 w-1.5 rounded-full bg-current" />
+                <>
+                  <span aria-hidden className="ml-1.5 h-1.5 w-1.5 rounded-full bg-current" />
+                  <span className="sr-only">(hoje)</span>
+                </>
               )}
             </Link>
           );
@@ -307,7 +327,12 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
                 feito ? "bg-grafite/40" : ""
               }`}
             >
-              <details className="group">
+              {/* name: abrir um fecha o outro, nativo do navegador */}
+              <details
+                name="exercicio"
+                open={item.id === proximo?.id}
+                className="group"
+              >
                 {/* A barra vermelha na lateral marca o que ainda falta; ela
                     apaga quando o exercicio e feito, entao o que sobra aceso na
                     tela e exatamente o que resta fazer */}
@@ -326,18 +351,19 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span
-                      className={`block text-[15px] font-medium leading-snug ${feito ? "text-fumaca line-through" : ""}`}
+                      className={`block text-lg font-semibold leading-snug ${feito ? "text-fumaca line-through" : ""}`}
                     >
                       {nomeExibido(item)}
+                      {feito && <span className="sr-only"> (feito)</span>}
                     </span>
-                    <span className="text-xs text-fumaca">
-                      {ultima
-                        ? `última: ${formataCarga(ultima.carga)} kg`
-                        : "sem carga registrada"}
-                    </span>
+                    {ultima && (
+                      <span className="text-sm text-fumaca">
+                        última: {formataCarga(ultima.carga)} kg
+                      </span>
+                    )}
                   </span>
                   <span
-                    className={`numero shrink-0 text-lg leading-none ${feito ? "text-fumaca" : ""}`}
+                    className={`numero shrink-0 text-2xl leading-none ${feito ? "text-fumaca" : ""}`}
                   >
                     {item.series}×{item.repeticoes}
                   </span>
@@ -349,7 +375,64 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
                   </span>
                 </summary>
 
+                {/* ordem: o que se usa em toda serie (instrucao da Kelly,
+                    descanso, carga) vem antes do que se ve uma vez (demo, dica).
+                    Com a demo em cima, o botao ficava abaixo da dobra */}
                 <div className="space-y-3 px-5 pb-5">
+                  {item.observacao && (
+                    <p className="text-base leading-relaxed text-gelo">
+                      {item.observacao}
+                    </p>
+                  )}
+
+                  {item.descanso_segundos ? (
+                    <CronometroDescanso segundos={item.descanso_segundos} />
+                  ) : null}
+
+                  <form
+                    action={marcarExercicio}
+                    className="flex items-end gap-2"
+                  >
+                    <input type="hidden" name="token" value={token} />
+                    <input type="hidden" name="treino_id" value={treino.id} />
+                    <input type="hidden" name="item_id" value={item.id} />
+                    <label className="w-28">
+                      <span className="mb-1 block text-xs uppercase tracking-widest text-fumaca">
+                        Carga (kg)
+                      </span>
+                      <input
+                        name="carga_kg"
+                        inputMode="decimal"
+                        enterKeyHint="done"
+                        defaultValue={marcacao?.carga_kg ?? ""}
+                        placeholder={ultima ? formataCarga(ultima.carga) : "—"}
+                        className="h-14 w-full rounded-lg border border-fumaca/70 bg-grafite px-3 text-lg text-gelo placeholder:text-fumaca focus:border-sangue focus:outline-none"
+                      />
+                    </label>
+                    {/* O "Ir" do teclado envia pelo primeiro botao. Quando o
+                        primeiro era "Desmarcar", corrigir a carga desmarcava o
+                        exercicio. Agora o primeiro sempre grava como feito */}
+                    <BotaoAcao
+                      name="feito"
+                      value="sim"
+                      carregando={feito ? "Salvando..." : "Marcando..."}
+                      className="h-14 flex-1 text-base"
+                    >
+                      {feito ? "Salvar carga" : "Fiz este"}
+                    </BotaoAcao>
+                    {feito && (
+                      <BotaoAcao
+                        name="feito"
+                        value="nao"
+                        variante="secundario"
+                        carregando="Tirando..."
+                        className="h-14"
+                      >
+                        Desmarcar
+                      </BotaoAcao>
+                    )}
+                  </form>
+
                   <MidiaExercicio
                     url={item.exercicio.midia_url}
                     titulo={nomeExibido(item)}
@@ -360,64 +443,14 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
                       {item.exercicio.dica}
                     </p>
                   )}
-                  {item.observacao && (
-                    <p className="text-sm text-fumaca">{item.observacao}</p>
-                  )}
-
-                  {item.descanso_segundos ? (
-                    <CronometroDescanso segundos={item.descanso_segundos} />
-                  ) : null}
 
                   <Evolucao marcas={marcas} />
-
-                  <form
-                    action={marcarExercicio}
-                    className="flex items-end gap-2"
-                  >
-                    <input type="hidden" name="token" value={token} />
-                    <input type="hidden" name="treino_id" value={treino.id} />
-                    <input type="hidden" name="item_id" value={item.id} />
-                    <label className="w-28">
-                      <span className="mb-1 block text-[10px] uppercase tracking-widest text-fumaca">
-                        Carga (kg)
-                      </span>
-                      <input
-                        name="carga_kg"
-                        inputMode="decimal"
-                        defaultValue={marcacao?.carga_kg ?? ""}
-                        placeholder={ultima ? formataCarga(ultima.carga) : "—"}
-                        className="w-full rounded-lg border border-borda bg-grafite px-3 py-2.5 text-base text-gelo focus:border-sangue focus:outline-none"
-                      />
-                    </label>
-                    <BotaoAcao
-                      name="feito"
-                      value={feito ? "nao" : "sim"}
-                      variante={feito ? "secundario" : "principal"}
-                      carregando={feito ? "Tirando..." : "Marcando..."}
-                      className="h-11 flex-1 text-sm"
-                    >
-                      {feito ? "Desmarcar" : "Fiz este"}
-                    </BotaoAcao>
-                  </form>
                 </div>
               </details>
             </li>
           );
         })}
       </ul>
-
-      {(deveMostrarCobranca(emAberto) || enviadoHoje(emAberto)) && (
-        <Pagamento
-          token={token}
-          emAberto={emAberto!}
-          chavePix={config.get("chave_pix") ?? ""}
-          titularPix={config.get("titular_pix") ?? ""}
-        />
-      )}
-
-      <Lembretes token={token} jaLigado={(lembretesRes.count ?? 0) > 0} />
-
-      <MinhasMedidas avaliacoes={avaliacoes} />
 
       <div className="px-5 py-6">
         {finalizadaEm ? (
@@ -462,6 +495,20 @@ export default async function Page(props: PageProps<"/aluno/[token]">) {
           </form>
         )}
       </div>
+
+      {(deveMostrarCobranca(emAberto) || enviadoHoje(emAberto)) && (
+        <Pagamento
+          token={token}
+          emAberto={emAberto!}
+          chavePix={config.get("chave_pix") ?? ""}
+          titularPix={config.get("titular_pix") ?? ""}
+        />
+      )}
+
+      <Lembretes token={token} jaLigado={(lembretesRes.count ?? 0) > 0} />
+
+      <MinhasMedidas avaliacoes={avaliacoes} />
+
 
       <p className="px-5 pb-10 text-center text-xs uppercase tracking-[0.2em] text-fumaca">
         Você é o responsável pela sua mudança
@@ -556,7 +603,7 @@ function Evolucao({ marcas }: { marcas: MarcaDeCarga[] }) {
   return (
     <div className="rounded-lg border border-borda bg-grafite/60 px-3 py-3">
       <div className="mb-2 flex items-baseline justify-between gap-2">
-        <span className="text-[10px] uppercase tracking-widest text-fumaca">
+        <span className="text-xs uppercase tracking-widest text-fumaca">
           Sua evolução
         </span>
         {diferenca !== 0 && (
@@ -577,7 +624,7 @@ function Evolucao({ marcas }: { marcas: MarcaDeCarga[] }) {
 
           return (
             <div key={`${marca.data}-${indice}`} className="flex-1 text-center">
-              <span className="mb-1 block text-[10px] text-fumaca">
+              <span className="mb-1 block text-xs text-fumaca">
                 {formataCarga(marca.carga)}
               </span>
               <span
@@ -585,7 +632,7 @@ function Evolucao({ marcas }: { marcas: MarcaDeCarga[] }) {
                 style={{ height: `${altura}px` }}
                 className={`block w-full rounded-sm ${ehUltima ? "bg-sangue" : "bg-borda"}`}
               />
-              <span className="mt-1 block text-[9px] text-fumaca">
+              <span className="mt-1 block text-xs text-fumaca">
                 {formataData(marca.data).slice(0, 5)}
               </span>
             </div>
@@ -614,18 +661,9 @@ function Moldura({
   );
 }
 
-/** Segunda = 1 ... domingo = 7, para bater com a agenda salva no banco. */
-function diaDaSemanaAtual() {
-  const domingoZero = new Date().getDay();
-  return domingoZero === 0 ? 7 : domingoZero;
-}
-
-function dataDeHoje() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function horaDe(iso: string) {
   return new Date(iso).toLocaleTimeString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
     hour: "2-digit",
     minute: "2-digit",
   });

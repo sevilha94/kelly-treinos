@@ -18,6 +18,19 @@ export function CronometroDescanso({ segundos }: { segundos: number }) {
   useEffect(() => {
     if (terminaEm === null) return;
 
+    // Tela acesa so durante a contagem. Com a tela apagada o navegador congela
+    // o cronometro e a vibracao do fim nunca acontece: o aviso so funcionava
+    // para quem ficava olhando. Solta no zero ou ao parar.
+    let ativo = true;
+    let trava: WakeLockSentinel | undefined;
+    navigator.wakeLock
+      ?.request("screen")
+      .then((t) => {
+        if (ativo) trava = t;
+        else t.release();
+      })
+      .catch(() => {});
+
     const tique = () => {
       const falta = Math.max(0, Math.ceil((terminaEm - Date.now()) / 1000));
       setRestante(falta);
@@ -26,12 +39,17 @@ export function CronometroDescanso({ segundos }: { segundos: number }) {
         jaAvisou.current = true;
         // vibrar funciona no Android; no iPhone e ignorado sem erro
         navigator.vibrate?.([200, 100, 200]);
+        trava?.release();
       }
     };
 
     tique();
     const id = setInterval(tique, 250);
-    return () => clearInterval(id);
+    return () => {
+      ativo = false;
+      clearInterval(id);
+      trava?.release();
+    };
   }, [terminaEm]);
 
   const rodando = terminaEm !== null && restante > 0;
@@ -62,16 +80,20 @@ export function CronometroDescanso({ segundos }: { segundos: number }) {
       {/* Nos ultimos 5 segundos o numero pulsa, para o aluno voltar a posicao
           antes de zerar em vez de descobrir depois. O celular costuma estar no
           chao nessa hora: escala se enxerga de longe, cor nao. */}
+      {/* regiao viva fixa: criada so no fim, o leitor de tela nem sempre anuncia */}
+      <span aria-live="polite" className="sr-only">
+        {acabou ? "Descanso acabou" : ""}
+      </span>
+      {/* grande enquanto roda: e lido a um metro e meio, com o celular no chao */}
       <span
-        aria-live={acabou ? "assertive" : "off"}
-        className={`numero text-2xl leading-none ${acabou ? "text-alerta" : ""} ${
+        className={`numero leading-none ${rodando ? "text-4xl" : "text-2xl"} ${acabou ? "text-alerta" : ""} ${
           rodando && restante <= 5 ? "animate-contagem" : ""
         }`}
       >
         {acabou ? "Pode ir!" : formataTempo(rodando ? restante : segundos)}
       </span>
 
-      <span className="flex-1 text-[10px] uppercase tracking-widest text-fumaca">
+      <span className="flex-1 text-xs uppercase tracking-widest text-fumaca">
         Descanso
       </span>
 

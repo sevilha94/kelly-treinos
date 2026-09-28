@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { ehAKelly } from "@/lib/kelly";
 
 /**
  * Guarda a assinatura de push do aparelho da Kelly.
@@ -17,7 +18,7 @@ export async function salvarAssinaturaPainel(dados: {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return;
+  if (!ehAKelly(user)) return;
 
   await supabase.from("painel_lembrete").upsert(
     {
@@ -36,7 +37,7 @@ export async function removerAssinaturaPainel(endpoint: string) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return;
+  if (!ehAKelly(user)) return;
 
   await supabase
     .from("painel_lembrete")

@@ -16,7 +16,8 @@ import { registrarBatida } from "@/lib/saude";
  */
 export async function GET(request: Request) {
   const autorizacao = request.headers.get("authorization");
-  if (autorizacao !== `Bearer ${process.env.CRON_SECRET}`) {
+  // sem a env, a comparacao virava "Bearer undefined" e a rota ficava aberta
+  if (!process.env.CRON_SECRET || autorizacao !== `Bearer ${process.env.CRON_SECRET}`) {
     return Response.json({ erro: "não autorizado" }, { status: 401 });
   }
 
@@ -113,15 +114,21 @@ async function rodarDisparo(supabase: ReturnType<typeof createAdminClient>) {
 
   const { data: agenda } = await supabase
     .from("aluno_agenda")
-    .select("aluno_id, treino:treino_id(id, letra, titulo)")
+    // !inner: treino excluido que ficou na agenda nao vira lembrete
+    .select("aluno_id, treino:treino_id!inner(id, letra, titulo)")
     .eq("dia_semana", diaDaSemana)
-    .not("treino_id", "is", null);
+    .is("treino.arquivado_em", null);
 
   if (!agenda?.length) {
+    // o resumo da Kelly nao depende de aluno treinar hoje: comprovante
+    // esperando no domingo tambem precisa de aviso
+    const avisoDoDia = await resumoParaAKelly(supabase, hojeLocal);
+    await marcarDiaEnviado(supabase, hojeLocal);
     return {
       enviados: 0,
       lancadas,
       copia,
+      avisoDoDia,
       motivo: "ninguém treina hoje",
     };
   }
@@ -197,16 +204,7 @@ async function rodarDisparo(supabase: ReturnType<typeof createAdminClient>) {
 
   // marca depois de enviar, e nao antes: se o envio quebrar no meio, a proxima
   // execucao tenta de novo em vez de dar o dia por encerrado
-  await supabase
-    .from("configuracao")
-    .upsert(
-      {
-        chave: "lembrete_enviado_em",
-        valor: hojeLocal,
-        atualizado_em: new Date().toISOString(),
-      },
-      { onConflict: "chave" },
-    );
+  await marcarDiaEnviado(supabase, hojeLocal);
 
   return {
     enviados,
@@ -215,6 +213,16 @@ async function rodarDisparo(supabase: ReturnType<typeof createAdminClient>) {
     avisoDoDia,
     horaLocal,
   };
+}
+
+async function marcarDiaEnviado(
+  supabase: ReturnType<typeof createAdminClient>,
+  hoje: string,
+) {
+  await supabase.from("configuracao").upsert(
+    { chave: "lembrete_enviado_em", valor: hoje, atualizado_em: new Date().toISOString() },
+    { onConflict: "chave" },
+  );
 }
 
 /**

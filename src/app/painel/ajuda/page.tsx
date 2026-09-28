@@ -598,7 +598,8 @@ export default async function Page() {
               <dt className="font-semibold">Gerar novo link</dt>
               <dd className="text-fumaca">
                 O link antigo morre na hora e para sempre. Use quando desconfiar
-                que ele repassou o link.
+                que ele repassou o link. Os lembretes no celular também são
+                desligados: o aluno liga de novo pelo link novo.
               </dd>
             </div>
             <div>

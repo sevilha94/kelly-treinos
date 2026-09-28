@@ -24,6 +24,7 @@ import {
   type Avaliacao,
   type Exercicio,
   type Treino,
+ primeiroNome,
 } from "@/lib/tipos";
 
 export default async function Page(props: PageProps<"/painel/alunos/[id]">) {
@@ -114,7 +115,7 @@ export default async function Page(props: PageProps<"/painel/alunos/[id]">) {
     <div className="space-y-5">
       <Link
         href="/painel/alunos"
-        className="text-sm text-fumaca hover:text-gelo"
+        className="inline-flex min-h-11 items-center text-sm text-fumaca hover:text-gelo"
       >
         ‹ Voltar para os alunos
       </Link>
@@ -138,6 +139,7 @@ export default async function Page(props: PageProps<"/painel/alunos/[id]">) {
         <LinkDoAluno
           url={`${await origemDoSite()}/aluno/${aluno.token_link}`}
           nome={primeiroNome(aluno.nome)}
+          telefone={aluno.telefone}
         />
         <ControleDeAcesso aluno={aluno} />
         <Aparelhos acessos={acessos} />
@@ -231,10 +233,6 @@ export default async function Page(props: PageProps<"/painel/alunos/[id]">) {
       </details>
     </div>
   );
-}
-
-function primeiroNome(nome: string) {
-  return nome.trim().split(/\s+/)[0];
 }
 
 /** Monta o endereco do site a partir do proprio pedido, sem depender de config. */
@@ -401,6 +399,8 @@ const AVISOS_DA_FICHA: Record<string, string> = {
     "Escolha um exercício na lista antes de clicar em Adicionar.",
   "sem-origem":
     "Escolha de qual aluno você quer copiar a planilha antes de confirmar.",
+  "avaliacao-nao-salvou":
+    "A avaliação não foi salva. Confira os números (altura em cm, peso em kg) e tente de novo.",
 };
 
 function AvisoDaFicha({ codigo }: { codigo?: string }) {

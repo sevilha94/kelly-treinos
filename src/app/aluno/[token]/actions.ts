@@ -6,6 +6,7 @@ import { after } from "next/server";
 import { avisarPainel } from "@/lib/push";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { leCarga } from "@/lib/carga";
+import { hoje as dataDeHoje } from "@/lib/tipos";
 
 /**
  * Leva o aluno de volta a tela dele com um recado.
@@ -53,7 +54,7 @@ async function sessaoDeHoje(
 
   if (!treino) return undefined;
 
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = dataDeHoje();
 
   const { data } = await supabase
     .from("sessao")
@@ -172,14 +173,16 @@ export async function removerAssinatura(dados: {
   if (error) throw new Error(`não consegui desligar o lembrete: ${error.message}`);
 }
 
-const TIPOS_ACEITOS = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/heic",
-  "application/pdf",
-];
-const TAMANHO_MAXIMO = 6 * 1024 * 1024;
+// a extensao sai do tipo, nunca do nome que veio do celular
+const EXTENSAO_DO_TIPO: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/heic": "heic",
+  "application/pdf": "pdf",
+};
+// a Vercel corta o envio em 4,5 MB antes de esta acao rodar
+const TAMANHO_MAXIMO = 4 * 1024 * 1024;
 
 export type EstadoComprovante = { erro?: string; enviado?: boolean };
 
@@ -202,11 +205,12 @@ export async function enviarComprovante(
   if (!(arquivo instanceof File) || arquivo.size === 0) {
     return { erro: "Escolha o arquivo do comprovante." };
   }
-  if (!TIPOS_ACEITOS.includes(arquivo.type)) {
+  const extensao = EXTENSAO_DO_TIPO[arquivo.type];
+  if (!extensao) {
     return { erro: "Envie uma imagem (print) ou um PDF." };
   }
   if (arquivo.size > TAMANHO_MAXIMO) {
-    return { erro: "Arquivo muito grande. O limite é 6 MB." };
+    return { erro: "Arquivo muito grande. O limite é 4 MB: mande um print." };
   }
 
   // pega a mensalidade em aberto mais antiga: e a que ele esta pagando
@@ -224,7 +228,6 @@ export async function enviarComprovante(
     return { erro: "Você não tem mensalidade em aberto no momento." };
   }
 
-  const extensao = arquivo.name.split(".").pop()?.toLowerCase() ?? "jpg";
   const caminho = `${contexto.alunoId}/${mensalidade.id}-${Date.now()}.${extensao}`;
 
   const { error: erroUpload } = await contexto.supabase.storage
@@ -236,7 +239,7 @@ export async function enviarComprovante(
     return { erro: "Não consegui receber o arquivo. Tente de novo." };
   }
 
-  await contexto.supabase
+  const { error: erroRegistro } = await contexto.supabase
     .from("mensalidade")
     .update({
       comprovante_caminho: caminho,
@@ -244,6 +247,12 @@ export async function enviarComprovante(
       forma: "Pix",
     })
     .eq("id", mensalidade.id);
+
+  // sem isto o aluno via "recebido" e continuava na regua de cobranca
+  if (erroRegistro) {
+    console.error(`[kelly-treinos] registro do comprovante: ${erroRegistro.message}`);
+    return { erro: "Não consegui registrar o envio. Tente de novo." };
+  }
 
   // o aviso vai depois da resposta: o aluno nao pode esperar o celular da
   // Kelly para saber que o envio deu certo

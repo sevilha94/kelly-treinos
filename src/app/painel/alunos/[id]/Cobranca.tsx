@@ -19,9 +19,9 @@ const COR_NIVEL: Record<Nivel, string> = {
   bloqueada: "text-sangue-claro",
 };
 import { formataData } from "@/lib/tipos";
+import { CLASSE_ENTRADA } from "@/componentes/Campo";
 
-const ENTRADA =
-  "w-full rounded-lg border border-borda bg-grafite px-3 py-2 text-sm text-gelo placeholder:text-fumaca/60 focus:border-sangue focus:outline-none";
+const ENTRADA = CLASSE_ENTRADA;
 
 export function Cobranca({
   aluno,

@@ -18,8 +18,10 @@ self.addEventListener("push", (evento) => {
       badge: "/icone-192.png",
       vibrate: [200, 100, 200],
       data: { url: dados.url },
-      // mesma tag substitui a anterior: nunca acumula lembrete velho na barra
-      tag: "lembrete-treino",
+      // mesma tag substitui a anterior: nunca acumula lembrete velho na barra.
+      // Aviso da Kelly fica sem tag: o segundo comprovante nao pode apagar o
+      // primeiro calado
+      tag: dados.url?.startsWith("/painel") ? undefined : "lembrete-treino",
     }),
   );
 });

@@ -20,7 +20,7 @@ export function ChavePix({
 
   return (
     <div className="rounded-lg border border-borda bg-preto/40 px-3 py-2.5">
-      <span className="block text-[10px] uppercase tracking-widest text-fumaca">
+      <span className="block text-xs uppercase tracking-widest text-fumaca">
         Chave Pix
       </span>
 

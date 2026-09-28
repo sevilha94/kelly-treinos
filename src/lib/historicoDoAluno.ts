@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Percepcao } from "./sessoes";
+import { diaDaSemanaDe, hoje } from "./tipos";
 
 export type TreinoFeito = {
   data: string;
@@ -122,24 +123,23 @@ function agruparPorSemana(treinos: TreinoFeito[]) {
   const contagem = new Map<string, number>();
 
   for (const treino of treinos) {
-    const dia = new Date(`${treino.data}T00:00:00`);
     // recua ate a segunda-feira daquela semana
-    const diaDaSemana = (dia.getDay() + 6) % 7;
-    dia.setDate(dia.getDate() - diaDaSemana);
-    const chave = dia.toISOString().slice(0, 10);
+    const chave = segundaDe(treino.data);
     contagem.set(chave, (contagem.get(chave) ?? 0) + 1);
   }
 
   const semanas: { semana: string; treinos: number }[] = [];
-  const inicio = new Date();
-  inicio.setDate(inicio.getDate() - ((inicio.getDay() + 6) % 7));
+  const inicio = Date.parse(segundaDe(hoje()));
 
   for (let i = 7; i >= 0; i--) {
-    const dia = new Date(inicio);
-    dia.setDate(dia.getDate() - i * 7);
-    const chave = dia.toISOString().slice(0, 10);
+    const chave = new Date(inicio - i * 7 * 86_400_000).toISOString().slice(0, 10);
     semanas.push({ semana: chave, treinos: contagem.get(chave) ?? 0 });
   }
 
   return semanas;
+}
+
+function segundaDe(iso: string): string {
+  const volta = diaDaSemanaDe(iso) - 1;
+  return new Date(Date.parse(iso) - volta * 86_400_000).toISOString().slice(0, 10);
 }

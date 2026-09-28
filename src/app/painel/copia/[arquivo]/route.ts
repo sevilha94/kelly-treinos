@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BALDE } from "@/lib/copiaDeSeguranca";
+import { ehAKelly } from "@/lib/kelly";
 
 /**
  * Entrega uma copia de seguranca para a Kelly baixar.
@@ -20,7 +21,7 @@ export async function GET(
   const {
     data: { user },
   } = await sessao.auth.getUser();
-  if (!user) {
+  if (!ehAKelly(user)) {
     return Response.redirect(new URL("/entrar", request.url));
   }
 

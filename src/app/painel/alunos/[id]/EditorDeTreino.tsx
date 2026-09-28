@@ -9,9 +9,9 @@ import { BotaoAcao } from "@/componentes/BotaoAcao";
 import { Cartao, Vazio } from "@/componentes/Cartao";
 import { AdicionarExercicio } from "./AdicionarExercicio";
 import { nomeExibido, type Exercicio, type Treino } from "@/lib/tipos";
+import { CLASSE_ENTRADA } from "@/componentes/Campo";
 
-const ENTRADA =
-  "w-full rounded-lg border border-borda bg-grafite px-3 py-2 text-sm text-gelo placeholder:text-fumaca/60 focus:border-sangue focus:outline-none";
+const ENTRADA = CLASSE_ENTRADA;
 
 export function EditorDeTreino({
   alunoId,

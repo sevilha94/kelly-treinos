@@ -89,9 +89,12 @@ export async function montarSessoes(
   const { data: itens } = await supabase
     .from("sessao_item")
     .select("sessao_id, treino_exercicio_id, feito, carga_kg")
+    // so as sessoes deste treino: item de treino nunca aparece em sessao de
+    // outro, e buscar todas passava do corte de 1000 linhas do Supabase, que
+    // podia levar justamente as marcacoes de hoje
     .in(
       "sessao_id",
-      sessoes.map((s) => s.id),
+      sessoes.filter((s) => s.treino_id === treinoId).map((s) => s.id),
     );
 
   const dataPorSessao = new Map(sessoes.map((s) => [s.id, s.data as string]));

@@ -146,12 +146,25 @@ export function formataData(iso: string): string {
   return `${dia}/${mes}/${ano}`;
 }
 
+/**
+ * Hoje em Sao Paulo (AAAA-MM-DD).
+ *
+ * O servidor da Vercel roda em UTC: a partir das 21h, `toISOString` e `getDay`
+ * ja estao no dia seguinte. Quem treinava de noite via as marcacoes sumirem no
+ * meio do treino. Todo "hoje" do app passa por aqui.
+ */
+export function hoje(agora = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(agora);
+}
+
+/** Segunda = 1 ... domingo = 7, para bater com a agenda salva no banco. */
+export function diaDaSemanaDe(iso: string): number {
+  return ((new Date(iso.slice(0, 10)).getUTCDay() + 6) % 7) + 1;
+}
+
 /** Dias inteiros entre uma data (AAAA-MM-DD) e hoje. */
 export function diasAtras(iso: string): number {
-  const dia = new Date(`${iso.slice(0, 10)}T00:00:00`);
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  return Math.round((hoje.getTime() - dia.getTime()) / 86_400_000);
+  return Math.round((Date.parse(hoje()) - Date.parse(iso.slice(0, 10))) / 86_400_000);
 }
 
 export const DIAS_SEMANA = [
@@ -163,3 +176,18 @@ export const DIAS_SEMANA = [
   { numero: 6, nome: "Sábado", curto: "Sáb" },
   { numero: 7, nome: "Domingo", curto: "Dom" },
 ] as const;
+
+export function primeiroNome(nome: string) {
+  return nome.trim().split(/\s+/)[0];
+}
+
+/**
+ * Conversa no WhatsApp ja aberta no aluno, com a mensagem escrita.
+ * Sem telefone, abre o WhatsApp para ela escolher o contato.
+ */
+export function linkWhatsApp(telefone: string | null | undefined, texto: string) {
+  const digitos = (telefone ?? "").replace(/\D/g, "");
+  // cadastrado sem DDI (o normal aqui): 10 ou 11 digitos, entao e Brasil
+  const numero = digitos.length <= 11 && digitos.length >= 10 ? `55${digitos}` : digitos;
+  return `https://wa.me/${numero}?text=${encodeURIComponent(texto)}`;
+}

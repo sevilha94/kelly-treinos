@@ -3,10 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { MEDIDAS } from "@/lib/tipos";
-import { copiarTreinos } from "@/lib/copiaPlanilha";
+import { MEDIDAS, hoje } from "@/lib/tipos";
+import { copiarTreinos, letraLivre } from "@/lib/copiaPlanilha";
 import { competenciaAtual } from "@/lib/mensalidades";
 import { posicoesQueMudaram, reordenar } from "@/lib/ordem";
+import { ehAKelly } from "@/lib/kelly";
 
 export type EstadoAluno = { erro?: string };
 
@@ -15,7 +16,7 @@ async function exigirLogin() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/entrar");
+  if (!ehAKelly(user)) redirect("/entrar");
   return supabase;
 }
 
@@ -149,6 +150,12 @@ export async function gerarNovoLink(formData: FormData) {
 
   const token = crypto.randomUUID().replaceAll("-", "");
   await supabase.from("aluno").update({ token_link: token }).eq("id", id);
+  // quem tinha o link antigo e ligou o lembrete seguiria recebendo o link novo
+  await supabase
+    .from("aluno_lembrete")
+    .update({ desativado_em: new Date().toISOString() })
+    .eq("aluno_id", id)
+    .is("desativado_em", null);
 
   revalidatePath(`/painel/alunos/${id}`);
 }
@@ -187,18 +194,19 @@ export async function criarTreino(formData: FormData) {
   const supabase = await exigirLogin();
   const alunoId = String(formData.get("aluno_id") ?? "");
 
-  const { count } = await supabase
+  const { data: ativos } = await supabase
     .from("treino")
-    .select("id", { count: "exact", head: true })
+    .select("letra, ordem")
     .eq("aluno_id", alunoId)
     .is("arquivado_em", null);
 
-  const total = count ?? 0;
+  const lista = ativos ?? [];
   await supabase.from("treino").insert({
     aluno_id: alunoId,
-    letra: String.fromCharCode(65 + total),
+    // contar os treinos repetia letra depois de excluir um do meio (A, C, D + D)
+    letra: letraLivre(new Set(lista.map((t) => t.letra))),
     titulo: "A definir",
-    ordem: total,
+    ordem: Math.max(-1, ...lista.map((t) => t.ordem)) + 1,
   });
 
   revalidatePath(`/painel/alunos/${alunoId}`);
@@ -219,11 +227,14 @@ export async function copiarPlanilha(formData: FormData) {
 export async function arquivarTreino(formData: FormData) {
   const supabase = await exigirLogin();
   const alunoId = String(formData.get("aluno_id") ?? "");
+  const treinoId = String(formData.get("treino_id") ?? "");
 
   await supabase
     .from("treino")
     .update({ arquivado_em: new Date().toISOString() })
-    .eq("id", String(formData.get("treino_id") ?? ""));
+    .eq("id", treinoId);
+  // senao a agenda segue apontando para ele e o lembrete anuncia treino excluido
+  await supabase.from("aluno_agenda").delete().eq("treino_id", treinoId);
 
   revalidatePath(`/painel/alunos/${alunoId}`);
 }
@@ -378,22 +389,25 @@ export async function salvarAvaliacao(formData: FormData) {
   for (const { campo } of MEDIDAS) medidas[campo] = numero(formData, campo);
 
   const pesoKg = medidas.peso_kg;
-  const alturaCm = numero(formData, "altura_cm");
+  // a coluna e inteira: "1,70" digitado em metros fazia o banco recusar a
+  // avaliacao inteira
+  const altura = numero(formData, "altura_cm");
+  const alturaCm = altura === null ? null : Math.round(altura < 3 ? altura * 100 : altura);
 
   const dados = {
     ...medidas,
     aluno_id: alunoId,
-    data: texto(formData, "data") ?? new Date().toISOString().slice(0, 10),
+    data: texto(formData, "data") ?? hoje(),
     altura_cm: alturaCm,
     observacoes: texto(formData, "observacoes"),
   };
 
   const id = texto(formData, "avaliacao_id");
-  if (id) {
-    await supabase.from("avaliacao").update(dados).eq("id", id);
-  } else {
-    await supabase.from("avaliacao").insert(dados);
-  }
+  const { error } = id
+    ? await supabase.from("avaliacao").update(dados).eq("id", id)
+    : await supabase.from("avaliacao").insert(dados);
+  conferir("salvarAvaliacao", error);
+  if (error) avisar(alunoId, "avaliacao-nao-salvou");
 
   // peso e altura tambem sobem para o cadastro do aluno, que e onde as outras
   // telas leem o valor mais recente

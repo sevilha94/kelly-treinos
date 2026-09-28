@@ -8,6 +8,7 @@ import { MidiaExercicio } from "@/componentes/MidiaExercicio";
 import { EnvioDeVideo } from "./EnvioDeVideo";
 import { GRUPOS_MUSCULARES, type Exercicio } from "@/lib/tipos";
 import { PASTA_DOS_VIDEOS } from "@/lib/midia";
+import { CLASSE_ENTRADA } from "@/componentes/Campo";
 
 export function FormularioExercicio({
   exercicio,
@@ -42,7 +43,7 @@ export function FormularioExercicio({
           onChange={(e) => setNome(e.target.value)}
           placeholder="Supino barra"
           required
-          className="w-full rounded-lg border border-borda bg-grafite px-3 py-2.5 text-base text-gelo placeholder:text-fumaca/60 focus:border-sangue focus:outline-none"
+          className={CLASSE_ENTRADA}
         />
         <span className="mt-1 block text-xs text-fumaca">
           Pode mudar depois quando quiser — é só voltar aqui e editar.
@@ -90,7 +91,7 @@ export function FormularioExercicio({
               value={midiaUrl}
               onChange={(e) => setMidiaUrl(e.target.value)}
               placeholder="https://youtube.com/... ou link de uma imagem/GIF"
-              className="w-full rounded-lg border border-borda bg-grafite px-3 py-2.5 text-base text-gelo placeholder:text-fumaca/60 focus:border-sangue focus:outline-none"
+              className={CLASSE_ENTRADA}
             />
             <span className="mt-1 block text-xs text-fumaca">
               Serve imagem, GIF ou vídeo do YouTube. Dá para começar com imagem e

@@ -4,7 +4,7 @@ import { FormularioAluno } from "../FormularioAluno";
 export default function Page() {
   return (
     <div className="mx-auto max-w-lg space-y-5">
-      <Link href="/painel/alunos" className="text-sm text-fumaca hover:text-gelo">
+      <Link href="/painel/alunos" className="inline-flex min-h-11 items-center text-sm text-fumaca hover:text-gelo">
         ‹ Voltar para os alunos
       </Link>
       <h1 className="titulo-pagina text-3xl">Novo aluno</h1>

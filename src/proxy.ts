@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { ehAKelly } from "@/lib/kelly";
 
 const COOKIE_DISPOSITIVO = "kj_dispositivo";
 
@@ -50,7 +51,7 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user && request.nextUrl.pathname.startsWith("/painel")) {
+  if (!ehAKelly(user) && request.nextUrl.pathname.startsWith("/painel")) {
     const url = request.nextUrl.clone();
     url.pathname = "/entrar";
     return NextResponse.redirect(url);

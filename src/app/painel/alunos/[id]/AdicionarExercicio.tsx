@@ -4,9 +4,9 @@ import { useState } from "react";
 import { adicionarItem } from "../actions";
 import type { Exercicio } from "@/lib/tipos";
 import { BotaoAcao } from "@/componentes/BotaoAcao";
+import { CLASSE_ENTRADA } from "@/componentes/Campo";
 
-const ENTRADA =
-  "w-full rounded-lg border border-borda bg-grafite px-3 py-2 text-sm text-gelo placeholder:text-fumaca/60 focus:border-sangue focus:outline-none";
+const ENTRADA = CLASSE_ENTRADA;
 
 /**
  * Escolher entre 136 exercicios numa lista corrida e inviavel, ainda mais no
@@ -102,6 +102,20 @@ export function AdicionarExercicio({
           Reps
         </span>
         <input name="repeticoes" defaultValue="12" className={ENTRADA} />
+      </label>
+
+      {/* sem isto todo exercicio nascia sem cronometro de descanso, ate ela
+          abrir um por um no editor */}
+      <label className="w-20">
+        <span className="mb-1 block text-xs uppercase tracking-widest text-fumaca">
+          Descanso (s)
+        </span>
+        <input
+          name="descanso_segundos"
+          inputMode="numeric"
+          defaultValue="60"
+          className={ENTRADA}
+        />
       </label>
 
       <BotaoAcao carregando="Adicionando...">Adicionar</BotaoAcao>

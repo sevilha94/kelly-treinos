@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { ehAKelly } from "@/lib/kelly";
 
 /**
  * Leva a Kelly ao comprovante daquela mensalidade.
@@ -26,7 +27,7 @@ export async function GET(
   const {
     data: { user },
   } = await sessao.auth.getUser();
-  if (!user) {
+  if (!ehAKelly(user)) {
     return Response.redirect(new URL("/entrar", request.url));
   }
 

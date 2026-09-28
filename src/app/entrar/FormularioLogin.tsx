@@ -16,8 +16,8 @@ export function FormularioLogin() {
       action={acao}
       className="rounded-2xl border border-borda bg-carvao p-6 space-y-4"
     >
-      <Campo label="E-mail" nome="email" tipo="email" obrigatorio />
-      <Campo label="Senha" nome="senha" tipo="password" obrigatorio />
+      <Campo label="E-mail" nome="email" tipo="email" autoCompletar="email" obrigatorio />
+      <Campo label="Senha" nome="senha" tipo="password" autoCompletar="current-password" obrigatorio />
 
       {estado.erro && (
         <p className="text-sm text-alerta">{estado.erro}</p>

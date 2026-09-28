@@ -5,11 +5,12 @@ import {
   MEDIDAS,
   calculaImc,
   formataData,
+  hoje,
   type Avaliacao,
 } from "@/lib/tipos";
+import { CLASSE_ENTRADA } from "@/componentes/Campo";
 
-const ENTRADA =
-  "w-full rounded-lg border border-borda bg-grafite px-3 py-2 text-sm text-gelo placeholder:text-fumaca/60 focus:border-sangue focus:outline-none";
+const ENTRADA = CLASSE_ENTRADA;
 
 /** Sem casa decimal quando o numero e redondo: 73 kg, nao 73,00 kg. */
 function formataNumero(valor: number | null): string {
@@ -142,7 +143,7 @@ export function Avaliacoes({
               <input
                 type="date"
                 name="data"
-                defaultValue={new Date().toISOString().slice(0, 10)}
+                defaultValue={hoje()}
                 className={ENTRADA}
               />
             </label>

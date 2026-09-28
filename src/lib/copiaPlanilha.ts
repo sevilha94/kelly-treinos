@@ -41,7 +41,7 @@ export async function copiarTreinos(
 
   const { data: treinosDestino } = await supabase
     .from("treino")
-    .select("id, ordem, itens:treino_exercicio(id)")
+    .select("id, letra, ordem, itens:treino_exercicio(id)")
     .eq("aluno_id", destinoId)
     .is("arquivado_em", null)
     .is("itens.arquivado_em", null);
@@ -49,6 +49,7 @@ export async function copiarTreinos(
   const agora = new Date().toISOString();
   const resultado = { ...vazio };
   let proximaOrdem = 0;
+  const usadas = new Set<string>();
 
   for (const treino of treinosDestino ?? []) {
     if (treino.itens.length === 0) {
@@ -56,9 +57,11 @@ export async function copiarTreinos(
         .from("treino")
         .update({ arquivado_em: agora })
         .eq("id", treino.id);
+      await supabase.from("aluno_agenda").delete().eq("treino_id", treino.id);
       resultado.treinosVaziosArquivados += 1;
     } else {
       proximaOrdem = Math.max(proximaOrdem, treino.ordem + 1);
+      usadas.add(treino.letra);
     }
   }
 
@@ -67,7 +70,7 @@ export async function copiarTreinos(
       .from("treino")
       .insert({
         aluno_id: destinoId,
-        letra: treino.letra,
+        letra: letraLivre(usadas, treino.letra),
         titulo: treino.titulo,
         ordem: proximaOrdem++,
       })
@@ -94,4 +97,17 @@ export async function copiarTreinos(
   }
 
   return resultado;
+}
+
+/**
+ * A letra pedida, ou a primeira que o aluno ainda nao usa.
+ *
+ * Letra repetida deixava um dos treinos inalcancavel: a tela do aluno acha o
+ * treino pela letra e sempre abria o primeiro.
+ */
+export function letraLivre(usadas: Set<string>, preferida?: string): string {
+  let letra = preferida && !usadas.has(preferida) ? preferida : "A";
+  while (usadas.has(letra)) letra = String.fromCharCode(letra.charCodeAt(0) + 1);
+  usadas.add(letra);
+  return letra;
 }

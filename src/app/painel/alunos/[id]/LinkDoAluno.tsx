@@ -1,8 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { linkWhatsApp } from "@/lib/tipos";
 
-export function LinkDoAluno({ url, nome }: { url: string; nome: string }) {
+export function LinkDoAluno({
+  url,
+  nome,
+  telefone,
+}: {
+  url: string;
+  nome: string;
+  telefone: string | null;
+}) {
   const [copiado, setCopiado] = useState(false);
 
   const mensagem = `Oi ${nome}! Esse é o link do seu treino, com o vídeo de cada exercício. Salva nos favoritos do celular: ${url}`;
@@ -25,10 +34,10 @@ export function LinkDoAluno({ url, nome }: { url: string; nome: string }) {
           {copiado ? "Copiado!" : "Copiar link"}
         </button>
         <a
-          href={`https://wa.me/?text=${encodeURIComponent(mensagem)}`}
+          href={linkWhatsApp(telefone, mensagem)}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex h-10 items-center rounded-lg bg-sangue px-4 text-xs font-semibold uppercase tracking-wider text-white hover:bg-sangue-claro"
+          className="inline-flex h-10 items-center rounded-lg bg-sangue px-4 text-xs font-semibold uppercase tracking-wider text-white hover:bg-sangue-escuro"
         >
           Enviar no WhatsApp
         </a>

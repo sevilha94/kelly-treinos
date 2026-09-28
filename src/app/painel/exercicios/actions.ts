@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { comunsFaltando } from "@/lib/exerciciosComuns";
 import { idDoGrupo } from "@/lib/tipos";
 import { arquivoDoVideoEnviado, PASTA_DOS_VIDEOS } from "@/lib/midia";
+import { ehAKelly } from "@/lib/kelly";
 
 export type EstadoExercicio = { erro?: string };
 
@@ -63,7 +64,7 @@ async function exigirLogin() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/entrar");
+  if (!ehAKelly(user)) redirect("/entrar");
   return supabase;
 }
 

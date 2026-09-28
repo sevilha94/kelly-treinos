@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { diasAtras } from "./tipos";
+import { diasAtras, hoje } from "./tipos";
 
 export type Mensalidade = {
   id: string;
@@ -46,7 +46,7 @@ export function deveMostrarCobranca(
  */
 export function enviadoHoje(emAberto: Mensalidade | undefined): boolean {
   if (!emAberto?.enviado_em || emAberto.pago_em) return false;
-  return emAberto.enviado_em.slice(0, 10) === new Date().toISOString().slice(0, 10);
+  return emAberto.enviado_em.slice(0, 10) === hoje();
 }
 
 /**
@@ -71,7 +71,9 @@ export const ROTULO_NIVEL: Record<Nivel, string> = {
   em_dia: "Em dia",
   atrasada: "Atrasada",
   critica: "Atraso crítico",
-  bloqueada: "Acesso pausado",
+  // o patamar e so tempo de atraso; se o aluno perde o acesso depende do que a
+  // Kelly ligou nele (deveBloquearPorAtraso). Chamar de "pausado" mentia
+  bloqueada: "7+ dias de atraso",
 };
 
 /**
@@ -99,9 +101,7 @@ export function nivelDaMensalidade(mensalidade: Mensalidade | undefined): {
 
 /** Primeiro dia do mes atual, no formato do banco. */
 export function competenciaAtual(): string {
-  const hoje = new Date();
-  const mes = String(hoje.getMonth() + 1).padStart(2, "0");
-  return `${hoje.getFullYear()}-${mes}-01`;
+  return `${hoje().slice(0, 7)}-01`;
 }
 
 export function nomeDaCompetencia(competencia: string): string {

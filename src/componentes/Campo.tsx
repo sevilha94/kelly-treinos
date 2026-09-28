@@ -13,8 +13,10 @@ type Props = {
   autoCompletar?: string;
 };
 
-const CLASSE_ENTRADA =
-  "w-full rounded-lg border border-borda bg-grafite px-3 py-2.5 text-base text-gelo placeholder:text-fumaca/60 focus:border-sangue focus:outline-none";
+// 16px (text-base): abaixo disso o iPhone da zoom a cada toque no campo.
+// Borda e placeholder em fumaca: a cor "borda" some sobre o grafite (1.18:1)
+export const CLASSE_ENTRADA =
+  "w-full rounded-lg border border-fumaca/70 bg-grafite px-3 py-2.5 text-base text-gelo placeholder:text-fumaca focus:border-sangue focus:outline-none";
 
 export function Campo({
   label,

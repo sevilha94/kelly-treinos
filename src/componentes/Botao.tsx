@@ -5,7 +5,7 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const ESTILOS = {
-  principal: "bg-sangue text-white hover:bg-sangue-claro",
+  principal: "bg-sangue text-white hover:bg-sangue-escuro",
   secundario: "border border-borda bg-grafite text-gelo hover:border-fumaca",
   perigo: "border border-sangue-escuro text-sangue-claro hover:bg-sangue-escuro/20",
 };

@@ -9,7 +9,7 @@ type Variante = "principal" | "secundario" | "perigo" | "texto";
 // telas que ja pedem uma altura maior no className
 const ESTILO: Record<Variante, string> = {
   principal:
-    "min-h-11 rounded-lg bg-sangue px-4 text-xs font-semibold uppercase tracking-wider text-white hover:bg-sangue-claro",
+    "min-h-11 rounded-lg bg-sangue px-4 text-xs font-semibold uppercase tracking-wider text-white hover:bg-sangue-escuro",
   secundario:
     "min-h-11 rounded-lg border border-borda px-3 text-xs uppercase tracking-wider text-gelo hover:border-fumaca",
   perigo:

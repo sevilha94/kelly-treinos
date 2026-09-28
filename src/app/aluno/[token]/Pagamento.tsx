@@ -71,7 +71,7 @@ export function Pagamento({
       {chavePix && <ChavePix chave={chavePix} titular={titularPix} />}
 
       <label className="block">
-        <span className="mb-1 block text-[10px] uppercase tracking-widest text-fumaca">
+        <span className="mb-1 block text-xs uppercase tracking-widest text-fumaca">
           Comprovante do Pix
         </span>
         <input
@@ -79,6 +79,16 @@ export function Pagamento({
           name="comprovante"
           accept="image/*,application/pdf"
           required
+          // acima de 4 MB a Vercel recusa o envio antes do servidor responder,
+          // e o aluno veria uma tela de erro generica
+          onChange={(evento) => {
+            const campo = evento.currentTarget;
+            campo.setCustomValidity(
+              (campo.files?.[0]?.size ?? 0) > 4 * 1024 * 1024
+                ? "Arquivo muito grande (máximo 4 MB). Mande um print da tela."
+                : "",
+            );
+          }}
           className="w-full min-h-11 text-sm text-fumaca file:mr-3 file:h-11 file:rounded-lg file:border-0 file:bg-grafite file:px-4 file:text-xs file:uppercase file:tracking-wider file:text-gelo"
         />
       </label>

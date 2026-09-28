@@ -10,6 +10,8 @@ import {
   deveBloquearPorAtraso,
   type Mensalidade,
 } from "../src/lib/mensalidades.ts";
+import { hoje, diaDaSemanaDe } from "../src/lib/tipos.ts";
+import { letraLivre } from "../src/lib/copiaPlanilha.ts";
 
 /**
  * Testes das regras que ja quebraram na vida real.
@@ -135,11 +137,8 @@ describe("mensalidade: quem paga e quem perde acesso", () => {
     enviado_em: null,
   };
 
-  const emDias = (dias: number) => {
-    const d = new Date();
-    d.setDate(d.getDate() - dias);
-    return d.toISOString().slice(0, 10);
-  };
+  const emDias = (dias: number) =>
+    new Date(Date.parse(hoje()) - dias * 86_400_000).toISOString().slice(0, 10);
 
   test("sem mensalidade em aberto, esta em dia", () => {
     assert.equal(nivelDaMensalidade(undefined).nivel, "em_dia");
@@ -231,5 +230,29 @@ describe("link da demonstracao", () => {
     assert.equal(lerMidia("https://exemplo.com/a.gif").tipo, "imagem");
     assert.equal(lerMidia("").tipo, "vazio");
     assert.equal(lerMidia(null).tipo, "vazio");
+  });
+});
+
+describe("dia de hoje", () => {
+  test("22h em Sao Paulo ainda e hoje, mesmo com o servidor em UTC", () => {
+    // 01h30 UTC do dia 29 = 22h30 do dia 28 em Brasilia
+    assert.equal(hoje(new Date("2026-09-29T01:30:00Z")), "2026-09-28");
+  });
+
+  test("dia da semana no formato da agenda", () => {
+    assert.equal(diaDaSemanaDe("2026-09-28"), 1); // segunda
+    assert.equal(diaDaSemanaDe("2026-10-04"), 7); // domingo
+  });
+});
+
+describe("letra do treino", () => {
+  test("excluir um do meio nao repete letra", () => {
+    assert.equal(letraLivre(new Set(["A", "C", "D"])), "B");
+  });
+
+  test("copia mantem a letra quando esta livre e troca quando nao esta", () => {
+    const usadas = new Set(["A", "B"]);
+    assert.equal(letraLivre(usadas, "C"), "C");
+    assert.equal(letraLivre(usadas, "A"), "D");
   });
 });

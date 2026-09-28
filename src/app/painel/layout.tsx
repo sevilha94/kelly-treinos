@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BotaoAcao } from "@/componentes/BotaoAcao";
 import { Marca } from "@/componentes/Marca";
 import { sair } from "@/app/entrar/actions";
+import { MenuDoPainel } from "./MenuDoPainel";
 
 export default function Layout({ children }: LayoutProps<"/painel">) {
   return (
@@ -21,26 +22,7 @@ export default function Layout({ children }: LayoutProps<"/painel">) {
             </BotaoAcao>
           </form>
         </div>
-        <nav className="mx-auto flex max-w-5xl gap-1 px-3 pb-2 text-sm">
-          <Link
-            href="/painel/alunos"
-            className="rounded-lg px-3 py-1.5 uppercase tracking-wider text-fumaca hover:bg-grafite hover:text-gelo"
-          >
-            Alunos
-          </Link>
-          <Link
-            href="/painel/exercicios"
-            className="rounded-lg px-3 py-1.5 uppercase tracking-wider text-fumaca hover:bg-grafite hover:text-gelo"
-          >
-            Exercícios
-          </Link>
-          <Link
-            href="/painel/ajuda"
-            className="rounded-lg px-3 py-1.5 uppercase tracking-wider text-fumaca hover:bg-grafite hover:text-gelo"
-          >
-            Ajuda
-          </Link>
-        </nav>
+        <MenuDoPainel />
       </header>
       <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-6">
         {children}
